@@ -1,56 +1,88 @@
 #!/usr/bin/sh
 
-# CONTATORE
-N=1
-for i
-do
-    N=`expr $N + 1`
-done
-# reset a 1
-N=1
+### Aggiornamento del PATH ###
 
-# AGGIORNAMENTO PATH
+# Aggiungo alla variabile d'ambiente PATH il path corrente
 PATH=`pwd`:$PATH
+# Aggiungo le modifiche effettuate alla variabile d'ambiente esportandola
 export PATH
 
-# LISTA
-var=
-for i
-do
-    var="$var $i"
-done
 
-# STRETTO
-if test $# -ne 3
+
+### Controllo PARAMETRI STRETTO ###
+
+# Controllo che il numero di parametri sia esattamente quello desiderato
+if test $# -ne )
 then
+    # In tal caso il numero dei parametri e' diverso da quello richiesto, quindi interrompo l'esecuzione
     echo "Numero parametri errato."
     exit 1;
 fi
 
-# LASCO
-if test $# -lt 3
+
+
+### Controllo PARAMETRI LASCO ###
+
+# Controllo che il numero di parametri sia rientri nella soglia desiderata
+if test $# -lt )
 then
+    # In tal caso il numero dei parametri e' minore di quello richiesto, quindi interrompo l'esecuzione
     echo "Numero parametri errato."
     exit 1;
 fi
 
-# PATH
+
+
+### Verifico che il PATH sia ASSOLUTO ###
+### Verifico che se la DIRECTORY e' ESISTENTE ###
+
 case $i in
 /*)
-    echo "Il parametro $i e' un path assoluto.";;
+    echo "Il parametro $i e' un path assoluto."
+    if test -d $i
+    then
+        echo "Il parametro $i e' una directory."
+    else
+        echo "Il parametro $i non e' una directory."
+        exit 3
+    fi;;
 *)
     echo "Il parametro $i non e' un path assoluto."
     exit 2;;
 esac
 
+
+
+### Ciclo con CONTATORE ###
+
+# Dichiaro una variabile da usare come contatore
+J=1
+# Scorro la lista in un ciclo che utilizza il contatore J
+for i
+do
+    # Incremento la variabile contatore di 1 a ogni iterazione
+    J=`expr $J + 1`
+done
+# Reimposto il contatore al punto di partenza, ovvero a 1
+J=1
+
+
+
+### Creazione LISTA ###
+
+# Creo una variabile che utilizzerò come contenitore per la mia lista
+var=
+# Uso un ciclo per riempire la lista
+for i
+do
+    # Inserisco il nuovo elemento in coda alla lista
+    var="$var $i"
+done
+
+
+
 # IS_DIR
-if test -d $i
-then
-    echo "Il parametro $i e' una directory."
-else
-    echo "Il parametro $i non e' una directory."
-    exit 3
-fi
+
 
 # DIR_TRAVERSABILE
 if test -x $i
