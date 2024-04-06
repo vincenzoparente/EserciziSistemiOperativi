@@ -20,7 +20,7 @@ for i; do
             exit 5
             ;;
         *)
-            if test $(expr $i) -le 0; then
+            if test `expr $i` -le 0; then
                 echo "Il numero $i non e' positivo."
             else
                 echo "Il numero $i e' positivo."
