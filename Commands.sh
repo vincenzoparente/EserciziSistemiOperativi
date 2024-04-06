@@ -16,7 +16,7 @@ $ export LC_COLLATE
 #
 # -- MATCH --
 # * fa match con qualunque stringa, anche vuota
-# ? fa match con un qualunque stringa, ma non con quella vuota
+# ? fa match con un qualunque carattere, ma non con il carattere vuoto
 # [abc] (fa schifo) oppure [a,b,c] fa match con qualunque stringa che contiene il carattere compreso tra quelli nell'insieme. Può essere negato con ! all'interno delle quadre
 # [c1-cn] fa match con le stringhe che contengono i caratteri contenuti nel range di valori specificato. Può essere negato con ! all'interno delle quadre
 # Utilizzi notevoli: 
