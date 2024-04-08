@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 # Verifica del numero di parametri inserito
-if test $# -lt 3; then
+if [[ $# -lt 3 ]]; then
     echo "Numero di parametri errato."
     exit 1
 fi
@@ -11,7 +11,7 @@ N=1
 
 # Ciclo che verifica che i primi N parametri siano nomi assoluti di directory
 for i; do
-    if test $N -eq $#; then
+    if [[ $N -eq $# ]]; then
         # Se sono entrato qui significa che ho terminato di leggere gli N parametri
         # Ora verifico che l'ultimo parametro sia un numero intero
         case $i in
@@ -20,7 +20,7 @@ for i; do
             exit 5
             ;;
         *)
-            if test $(expr $i) -le 0; then
+            if [[ $i -le 0 ]]; then
                 echo "Il numero $i non e' positivo."
             else
                 echo "Il numero $i e' positivo."
@@ -39,7 +39,7 @@ for i; do
     /*)
         echo "Il parametro $i e' un path assoluto."
         # Verifico che i parametri forniti siano directory esistenti
-        if test -d $i -a -x $i; then
+        if [[ -d $i && -x $i ]]; then
             # Aggiorno la lista di cartelle trovate
             dirFound="$dirFound $i"
             echo "Il parametro e' una directory"
@@ -55,7 +55,7 @@ for i; do
     esac
 
     # Incremento il contatore
-    N=$(expr $N + 1)
+    N=$(("$N" + 1))
 done
 
 # Aggiorno il PATH
@@ -64,11 +64,11 @@ export PATH
 
 N=1
 for g; do
-    if test $N -eq $#; then
+    if [[ $N -eq $# ]]; then
         # Se sono entrato qui significa che ho terminato di leggere gli N parametri
         break
     fi
 
     # Incremento il contatore
-    N=$(expr $N + 1)
+    N=$(("$N" + 1))
 done

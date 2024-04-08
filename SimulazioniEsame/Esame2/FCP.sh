@@ -1,13 +1,13 @@
 #!/usr/bin/bash
 
 # Controllo lasco del numero di parametri inseriti
-if test $# -lt 3; then
+if [[ $# -lt 3 ]]; then
     echo "Numero parametri errato."
     exit 1
 fi
 
 # Controllo che il primo parametro sia un numero intero
-case $1 in
+case "$1" in
 *[!0-9]*)
     echo "Il parametro $1 non e' un numero intero."
     exit 2
@@ -15,7 +15,7 @@ case $1 in
 *)
     echo "Il parametro $1 e' un numero intero."
     # Controllo che il numero sia positivo
-    if test $1 -le 0; then
+    if test "$1" -le 0; then
         echo "Il numero $1 non e' positivo."
     else
         echo "Il numero $1 e' positivo."
@@ -34,15 +34,15 @@ N=1
 # Ciclo per scorrere tutti i parametri
 for i; do
     # Salto il primo parametro
-    if test $N -eq 1; then
+    if [[ "$N" -eq 1 ]]; then
         break
     fi
     # Controllo che il path sia assoluto
-    case $i in
+    case "$i" in
     /*)
         echo "Il parametro $i e' un path assoluto."
         # Controllo che la directory esista e sia traversabile
-        if test -d $i -a -x $i; then
+        if [[ -d "$i" && -x "$i" ]]; then
             echo "Il parametro $i e' una directory."
             dirList="$dirList $i"
         else
@@ -55,7 +55,7 @@ for i; do
         exit 2
         ;;
     esac
-    N=$(expr $N + 1)
+    N=$(("$N" + 1))
 done
 
 # Creo il file temporaneo dove salvare le occorrenze
