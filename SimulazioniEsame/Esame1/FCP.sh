@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 
 # Verifica del numero di parametri inserito
 if test $# -lt 3; then
@@ -20,7 +20,7 @@ for i; do
             exit 5
             ;;
         *)
-            if test `expr $i` -le 0; then
+            if test $(expr $i) -le 0; then
                 echo "Il numero $i non e' positivo."
             else
                 echo "Il numero $i e' positivo."
@@ -55,11 +55,11 @@ for i; do
     esac
 
     # Incremento il contatore
-    N=`expr $N + 1`
+    N=$(expr $N + 1)
 done
 
 # Aggiorno il PATH
-PATH=`pwd`:$PATH
+PATH=$(pwd):$PATH
 export PATH
 
 N=1
@@ -70,5 +70,5 @@ for g; do
     fi
 
     # Incremento il contatore
-    N=`expr $N + 1`
+    N=$(expr $N + 1)
 done

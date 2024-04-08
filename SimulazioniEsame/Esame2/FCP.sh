@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 
 # Controllo lasco del numero di parametri inseriti
 if test $# -lt 3; then
@@ -55,14 +55,14 @@ for i; do
         exit 2
         ;;
     esac
-    N=`expr $N + 1`
+    N=$(expr $N + 1)
 done
 
 # Creo il file temporaneo dove salvare le occorrenze
 >/tmp/occurrences
 
 # Aggiorno la variabile d'ambiente PATH
-PATH=`pwd`:$PATH
+PATH=$(pwd):$PATH
 export PATH
 
 # Ciclo che scorre la lista di parametri
