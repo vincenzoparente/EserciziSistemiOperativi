@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 # Scorro tutti i file nella directory
-for i in $1; do
+for i in $(ls $1); do
     # Verifico di avere diritto di lettura del file e che esso abbia Y righe o piu'
     if test $i -r -a $(wc -l <$i) -ge $2; then
         head -5 $i | tail -1 | cat >$i.quinta
