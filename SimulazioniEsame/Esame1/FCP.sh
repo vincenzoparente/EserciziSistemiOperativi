@@ -55,7 +55,7 @@ for i; do
     esac
 
     # Incremento il contatore
-    N=$(("$N" + 1))
+    N=$((N + 1))
 done
 
 # Aggiorno il PATH
@@ -70,5 +70,5 @@ for g; do
     fi
 
     # Incremento il contatore
-    N=$(("$N" + 1))
+    N=$((N + 1))
 done
