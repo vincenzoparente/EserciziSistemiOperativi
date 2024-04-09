@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 ### LEGENDA RETURN VALUES ###
 
@@ -81,7 +81,7 @@ esac
 ### Ciclo con CONTATORE ###
 
 # Scorro la lista parametri in un ciclo che utilizza il contatore i
-for ((i = 1; i <= $#; i++)); do
+for (( i = 1; i <= $#; i++ )); do
     echo "$i"
 done
 
@@ -94,7 +94,7 @@ var=
 # Uso un ciclo per riempire la lista
 for i; do
     # Inserisco il nuovo elemento in coda alla lista
-    var="$var $i"
+    var+=("$i")
 done
 
 # -------------------------------------------------------------------------------------------------------------- #
