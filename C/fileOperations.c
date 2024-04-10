@@ -6,6 +6,7 @@
 #define PERM 0666
 
 int main (int argc, char *argv[]) {
+    // Dichiaro le variabili per i file da leggere e scrivere e una per il numero di byte letti
     int infile, outfile, nread;
     char buffer[BUFSIZ];
 
