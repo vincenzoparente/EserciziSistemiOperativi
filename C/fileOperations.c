@@ -5,6 +5,8 @@
 
 #define PERM 0666       // Definisco i permessi del file in ottale
 
+// RICORDA: I file vengono chiusi automaticamente quando si chiude il programma con exit()
+
 int main (int argc, char *argv[]) {
     // Dichiaro le variabili per i file da leggere e scrivere e una per il numero di byte letti
     int infile, outfile, nread;
@@ -40,7 +42,5 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    close(infile);
-    close(outfile);
     exit(0);
 }
