@@ -3,7 +3,7 @@
 #include <unistd.h>     // Contiene le funzioni per la gestione dei file (open, read, write, close)
 #include <fcntl.h>      // Contiene le costanti per la gestione dei file (O_RDONLY, O_WRONLY, O_RDWR)
 
-#define PERM 0666
+#define PERM 0666       // Definisco i permessi del file in ottale
 
 int main (int argc, char *argv[]) {
     // Dichiaro le variabili per i file da leggere e scrivere e una per il numero di byte letti
