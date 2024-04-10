@@ -10,14 +10,14 @@ for i in *; do
     then
         echo "Il file $i e' leggibile, scrivibile e si chiama $2.txt."
         # Scrivo in append la lunghezza e il path assoluto del file sul file temporaneo passato come terzo parametro
-        echo `pwd`/$i `wc -l < $i` >> $3
+        echo "`pwd`/$i `wc -l < $i`" >> "$3"
     else
         # Se non e' un file, controllo se e' una directory e se essa e' traversabile
         if test -d $i -a -x $i
         then
             echo "Il file $i e' una directory traversabile."
             # Chiamo il file ricorsivo FCR.sh passando i parametri richiesti
-            FCR.sh `pwd`/$i $2
+            FCR.sh "`pwd`/$i" "$2" "$3"
         fi
     fi
 done

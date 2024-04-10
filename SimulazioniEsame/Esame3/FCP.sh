@@ -57,6 +57,7 @@ PATH=`pwd`:$PATH
 export PATH
 
 # Creo un file temporaneo
+echo "Creo un file temporaneo."
 > /tmp/temp$$
 
 # Ciclo di chiamate al file ricorsivo FCR.sh
@@ -80,8 +81,8 @@ read risposta
 # Controllo la risposta dell'utente
 case $risposta in
 S*|s*|Y*|y*)
-    # Ordino alfabeticamente i file presenti nel file temporaneo
-    sort /tmp/temp$$;;
+    # Ordino alfabeticamente i file presenti nel file temporaneo senza separare le maiuscole dalle minuscole
+    sort -f /tmp/temp$$;;
 N*|n*)
     # Non faccio nulla
     ;;
@@ -91,4 +92,5 @@ N*|n*)
 esac
 
 # Elimino il file temporaneo
+echo "Elimino il file temporaneo."
 rm /tmp/temp$$
