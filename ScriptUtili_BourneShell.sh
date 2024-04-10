@@ -185,9 +185,11 @@ esac
 ### Eliminazione FILE TEMPORANEO ###
 
 # Creo un file temporaneo
+echo "Creo un file temporaneo."
 > /tmp/temp$$
 
 # Elimino il file temporaneo
+echo "Elimino il file temporaneo."
 rm /tmp/temp$$
 
 # -------------------------------------------------------------------------------------------------------------- #
