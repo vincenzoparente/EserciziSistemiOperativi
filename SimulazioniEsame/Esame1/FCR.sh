@@ -1,35 +1,32 @@
-#!/usr/bin/bash
+#!/bin/sh
 
-# Creo un file temporaneo
-touch /tmp/mytemp
-echo "File creato correttamente"
-
-# Prendo la lista dei file della directory
-ls "$1" >/tmp/mytemp
-echo "Stampa eseguita correttamente"
+# Mi sposto nella directory passata come parametro
+cd "$1"
 
 # Varibile che segnala se ho trovato o no una sottodir (0 se non c'e', 1 altrimenti)
 flag=0
-echo "Flag e' $flag"
-for i in $(cat /tmp/mytemp); do
+echo "flag = $flag"
+for i in *; do
     # Controllo se il file e' una directory
     if test -d "$i"; then
-        echo "Sottodirectory trovata."
+        echo "Directory non valida. Sottodirectory $i trovata."
         flag=1
-        echo "Flag e' $flag"
+        echo "flag = $flag"
         # In tal caso avvio un ulteriore processo di esplorazione
-        ./FCR.sh "$i" "$2"
+        FCR.sh "`pwd`/$i" "$2"
     else
-        if [[ $(wc -l) -le "$2" ]]; then
-            echo "Il file ha lunghezza (in linee) inferirore o uguale a $2"
+        # Controllo se il file e' di lunghezza inferiore o uguale a $2
+        if test `wc -l < $i` -le "$2"; then
+            echo "Directory non valida. File $i di lunghezza (in linee) inferirore o uguale a $2 trovato."
             flag=1
-            echo "Flag e' $flag"
+            echo "flag = $flag"
         fi
     fi
 done
 
 # Controllo se tra i file c'e' almeno una directory
-if [[ "$flag" -eq 0 ]]; then
+if test "$flag" -eq 0; then
     echo "Directory valida."
-    dirOnlyFile=$(("$dirOnlyFile" + 1))
+    # Salvo il nome della directory in un file temporaneo (se non esiste, lo creo)
+    echo `pwd`/"$1" >> "$3"
 fi
