@@ -55,14 +55,15 @@ fi
 ### Verifico che se la DIRECTORY e' ESISTENTE ###
 ### Verifico che se la DIRECTORY e' TRAVERSABILE ###
 
+# Uso un case per verificare se il parametro e' un path assoluto
 case $i in
 /*)
     echo "Il parametro $i e' un path assoluto."
-    # Verifico l'esistenza della directory
+    # Ora verifico l'esistenza della directory
     if test -d $i
     then
         echo "Il parametro $i e' una directory."
-        # Verifico che la directory sia traversabile
+        # Infine verifico che la directory sia traversabile
         if test -x $i
         then
             echo "Il parametro $i e' una directory traversabile."
