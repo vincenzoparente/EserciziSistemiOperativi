@@ -92,7 +92,7 @@ esac
 case $i in
 /*)
     echo "Il parametro $i e' un path assoluto."
-    # Ora verifico l'esistenza della directory
+    # Ora verifico l'esistenza della directory e che essa sia traversabile
     if test -d $i -a -x $i
     then
         echo "Il parametro $i e' una directory traversabile."
