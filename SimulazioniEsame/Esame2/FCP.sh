@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
 # Controllo lasco del numero di parametri inseriti
-if [[ $# -lt 3 ]]; then
+if test $# -lt 3; then
     echo "Numero parametri errato."
     exit 1
 fi
@@ -26,6 +26,9 @@ esac
 # Assegno a una variabile Y il primo parametro
 Y=$1
 
+# Salto il primo parametro usando shift
+shift
+
 # Creo una lista vuota per conservarvi i parametri
 dirList=""
 
@@ -33,16 +36,12 @@ dirList=""
 N=1
 # Ciclo per scorrere tutti i parametri
 for i; do
-    # Salto il primo parametro
-    if [[ "$N" -eq 1 ]]; then
-        break
-    fi
     # Controllo che il path sia assoluto
     case "$i" in
     /*)
         echo "Il parametro $i e' un path assoluto."
         # Controllo che la directory esista e sia traversabile
-        if [[ -d "$i" && -x "$i" ]]; then
+        if test -d "$i" -a -x "$i"; then
             echo "Il parametro $i e' una directory."
             dirList="$dirList $i"
         else
@@ -55,24 +54,25 @@ for i; do
         exit 4
         ;;
     esac
-    N=$(("$N" + 1))
+    N=`expr "$N" + 1`
 done
 
 # Creo il file temporaneo dove salvare le occorrenze
-touch /tmp/occurrences
+> /tmp/occurrences$$
 
-# Aggiorno la variabile d'ambiente PATH
-PATH=$(pwd):$PATH
+# Aggiungo alla variabile d'ambiente PATH il path corrente
+PATH=`pwd`:$PATH
+# Aggiungo le modifiche effettuate alla variabile d'ambiente esportandola
 export PATH
 
 # Ciclo che scorre la lista di parametri
 for i in $dirList; do
-    FCR.sh $i $Y
+    FCR.sh "$i" "$Y" "/tmp/occurrences$$"
 done
 
 # Conto le occorrenze
-echo "Il numero di file aventi 5 o piu' righe e': $(wc -l < /tmp/occurrences)"
+echo "Il numero di file aventi $Y o piu' righe e': `wc -l < /tmp/occurrences$$`"
 
 # Rimuovo il file temporaneo
-rm /tmp/occurrences
+rm /tmp/occurrences$$
 echo "File temporaneo rimosso."

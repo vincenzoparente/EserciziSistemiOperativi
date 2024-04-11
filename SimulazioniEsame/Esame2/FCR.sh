@@ -1,24 +1,22 @@
-#!/bin/bash
+#!/bin/sh
 
-# Aggiungo alla variabile d'ambiente PATH il path corrente
-PATH=$(pwd):$PATH
-# Aggiungo le modifiche effettuate alla variabile d'ambiente esportandola
-export PATH
+# Mi sposto nella directory passata come primo parametro
+cd "$1"
 
 # Scorro tutti i file nella directory
-for i in $(ls $1); do
+for i in *; do
     # Verifico di avere diritto di lettura del file e che esso abbia Y righe o piu'
-    if [[ -r "$i" && $(wc -l <"$i") -ge "$2" ]]; then
+    if test -r "$i" -a `wc -l <"$i"` -ge "$2"; then
         head -5 "$i" | tail -1 | cat >"$i".quinta
-        echo "$(pwd)/$i" >> /tmp/occurrences
+        echo "`pwd`/$i" >> "$3"
     else
         # Controllo se e' una directory e nel caso se e' traversabile
         if test "$i" -d; then
             if test "$i" -x; then
-                FCR.sh "$j" "$2"
+                FCR.sh "$j" "$2" "$3"
             fi
         else
-            touch "$i".NOquinta
+            > "$i".NOquinta
         fi
     fi
 done
