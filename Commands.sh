@@ -400,7 +400,7 @@ $ test numero1 [-eq -ne -gt -ge -lt -le] numero2
 # tutte le opzioni del comando test possono essere utilizzate con la negazione "!"
 
 # Richiedere all'utente di inserire delle stringhe
-$ read var1 var2 var3
+$ read var1 var2 var3   # le stringhe inserite verranno salvate nelle variabili var1, var2 e var3
 
 # Alternativa multipla
 $ case $var in

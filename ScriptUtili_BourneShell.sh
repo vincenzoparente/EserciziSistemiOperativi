@@ -165,7 +165,7 @@ esac
 # Chiedo all'utente se vuole visualizzare in ordine alfabetico i file
 echo "Vuoi visualizzare in ordine alfabetico i file? [S/N]"
 # Leggo la risposta dell'utente
-read risposta
+read -r risposta
 # Controllo la risposta dell'utente
 case $risposta in
 S*|s*|Y*|y*)

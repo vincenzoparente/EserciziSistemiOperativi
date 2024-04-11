@@ -16,7 +16,7 @@ J=1
 # Scorro la lista parametri in un ciclo che utilizza il contatore J
 for i; do
     # Escludo l'ultimo parametro
-    if test $J -eq $#
+    if test "$J" -eq $#
     then
         echo "Escludo dai controlli l'ultimo parametro: $i."
         # Salvo il parametro nella variabile S
@@ -46,7 +46,7 @@ for i; do
     esac
 
     # Incremento la variabile contatore di 1 a ogni iterazione
-    J=`expr $J + 1`
+    J=`expr "$J" + 1`
 done
 # Reimposto il contatore al punto di partenza, ovvero a 1
 J=1
@@ -63,9 +63,9 @@ echo "Creo un file temporaneo."
 # Ciclo di chiamate al file ricorsivo FCR.sh
 for i in $dirList; do
     # Chiamo il file ricorsivo FCR.sh passando i parametri richiesti
-    FCR.sh $i $S /tmp/temp$$
+    FCR.sh "$i" "$S" /tmp/temp$$
     # Incremento la variabile contatore di 1 a ogni iterazione
-    J=`expr $J + 1`
+    J=`expr "$J" + 1`
 done
 
 # Conto il numero di righe del file temporaneo
