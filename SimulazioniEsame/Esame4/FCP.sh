@@ -12,13 +12,11 @@ fi
 # Verifico che il primo parametro sia un carattere
 case $1 in
     [a-z,A-Z])
-        echo "Il primo parametro $1 e' un carattere."
-        ;;
+        echo "Il primo parametro $1 e' un carattere.";;
     *)
         echo "Il primo parametro $1 non e' un carattere. Processo interrotto."
         # Esco specificando un valore intero di errore
-        exit 2
-        ;;
+        exit 2;;
 esac
 
 # Salvo il primo parametro in una variabile
@@ -37,7 +35,7 @@ for i; do
     /*)
         echo "Il parametro $i e' un path assoluto."
         # Ora verifico l'esistenza della directory e che essa sia traversabile
-        if test -d $i -a -x $i
+        if test -d "$i" -a -x "$i"
         then
             echo "Il parametro $i e' una directory traversabile."
             # Aggiungo il parametro alla lista
@@ -61,14 +59,37 @@ export PATH
 
 # Creo un file temporaneo
 echo "Creo un file temporaneo."
-> /tmp/temp$$
+> /tmp/nomiAssoluti
 
 # Uso un ciclo for per scorrere la lista delle directory
 for i in $dirList; do
     # Chiamo lo script ricorsivo
-    FCR.sh "$i" "$C" "/tmp/temp$$"
+    FCR.sh "$i" "$C" "/tmp/nomiAssoluti"
+done
+
+# Stampo il numero di directory trovate
+echo "Numero di directory trovate: `wc -l /tmp/nomiAssoluti`"
+
+# Scorro le righe del file temporaneo
+for i in `cat /tmp/nomiAssoluti`; do
+    # Stampo il contenuto della riga
+    echo "Directory: $i. Elena, vorresti visualizzare anche gli elementi nascosti della directory? [S/N]"
+    # Leggo la risposta di Elena
+    read -r answer
+    # Controllo la risposta di Elena
+    case $answer in
+    S*|s*|Y*|y*)
+        # Visualizzo gli elementi nascosti della directory
+        ls -a "$i";;
+    N*|n*)
+        # Non visualizzo gli elementi nascosti della directory
+        ls "$i";;
+    *)
+        # Risposta non valida
+        echo "Risposta non valida.";;
+    esac
 done
 
 # Elimino il file temporaneo
 echo "Elimino il file temporaneo."
-rm /tmp/temp$$
+rm /tmp/nomiAssoluti
