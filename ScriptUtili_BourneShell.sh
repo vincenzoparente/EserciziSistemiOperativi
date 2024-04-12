@@ -39,7 +39,7 @@ fi
 
 ### Controllo PARAMETRI LASCO ###
 
-# Controllo che il numero di parametri sia rientri nella soglia desiderata
+# Controllo che il numero di parametri rientri nella soglia desiderata
 if test $# -lt 3; then
     # In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione
     echo "Numero parametri errato. Processo interrotto."
