@@ -28,8 +28,7 @@ export PATH
 ### Controllo PARAMETRI STRETTO ###
 
 # Controllo che il numero di parametri sia esattamente quello desiderato
-if test $# -ne )
-then
+if test $# -ne 3; then
     # In tal caso il numero dei parametri e' diverso da quello richiesto, quindi interrompo l'esecuzione
     echo "Numero parametri errato. Processo interrotto."
     # Esco specificando un valore intero di errore
@@ -41,13 +40,63 @@ fi
 ### Controllo PARAMETRI LASCO ###
 
 # Controllo che il numero di parametri sia rientri nella soglia desiderata
-if test $# -lt )
-then
+if test $# -lt 3; then
     # In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione
     echo "Numero parametri errato. Processo interrotto."
     # Esco specificando un valore intero di errore
     exit 1;
 fi
+
+# -------------------------------------------------------------------------------------------------------------- #
+
+### Verifica che un NUMERO sia INTERO POSITIVO ###
+
+# Controllo se il parametro e' un numero intero
+case $i in
+*[!0-9]*)
+    # In tal caso il parametro non e' un numero intero, quindi interrompo l'esecuzione
+    echo "Il parametro $i non e' un numero intero. Processo interrotto."
+    # Esco specificando un valore intero di errore
+    exit 5;;
+*)
+    echo "Il parametro $i e' un numero intero."
+    # Controllo se il numero e' positivo
+    if test "$i" -le 0; then
+        echo "Il numero $i non e' positivo."
+        # Esco specificando un valore intero di errore
+        exit 6
+    else
+        echo "Il numero $i e' positivo."
+    fi;;
+esac
+
+# -------------------------------------------------------------------------------------------------------------- #
+
+### Verifica che un PARAMETRO sia una STRINGA ###
+
+# Controllo che il secondo parametro sia una stringa
+case $1 in
+    *[0-9]*) 
+        echo "Il parametro $1 non e' una stringa. Processo interrotto."
+        # Esco specificando un valore intero di errore
+        exit 9;;
+    *) 
+        echo "Il parametro $1 e' una stringa.";;
+esac
+
+# -------------------------------------------------------------------------------------------------------------- #
+
+### Verifica che un PARAMETRO sia un CARATTERE ###
+
+# Verifico che il primo parametro sia un carattere
+case $1 in
+    [a-z,A-Z])
+        echo "Il primo parametro $1 e' un carattere.";;
+    *)
+        echo "Il primo parametro $1 non e' un carattere. Processo interrotto."
+        # Esco specificando un valore intero di errore
+        exit 2;;
+esac
 
 # -------------------------------------------------------------------------------------------------------------- #
 
@@ -60,12 +109,10 @@ case $i in
 /*)
     echo "Il parametro $i e' un path assoluto."
     # Ora verifico l'esistenza della directory
-    if test -d $i
-    then
+    if test -d "$i"; then
         echo "Il parametro $i e' una directory."
         # Infine verifico che la directory sia traversabile
-        if test -x $i
-        then
+        if test -x "$i"; then
             echo "Il parametro $i e' una directory traversabile."
         else
             echo "Il parametro $i non e' una directory traversabile. Processo interrotto."
@@ -93,8 +140,7 @@ case $i in
 /*)
     echo "Il parametro $i e' un path assoluto."
     # Ora verifico l'esistenza della directory e che essa sia traversabile
-    if test -d $i -a -x $i
-    then
+    if test -d "$i" -a -x "$i"; then
         echo "Il parametro $i e' una directory traversabile."
     else
         echo "Il parametro $i non e' una directory traversabile. Processo interrotto."
@@ -116,7 +162,7 @@ J=1
 # Scorro la lista in un ciclo che utilizza il contatore J
 for i; do
     # Incremento la variabile contatore di 1 a ogni iterazione
-    J=`expr $J + 1`
+    J=`expr "$J" + 1`
 done
 # Reimposto il contatore al punto di partenza, ovvero a 1
 J=1
@@ -135,42 +181,16 @@ done
 
 # -------------------------------------------------------------------------------------------------------------- #
 
-### Controllo se il PARAMETRO e' un NUMERO INTERO ###
-### Controllo se il PARAMETRO e' un NUMERO POSITIVO ###
-
-# Controllo se il parametro e' un numero intero
-case $i in
-*[!0-9]*)
-    # In tal caso il parametro non e' un numero intero, quindi interrompo l'esecuzione
-    echo "Il parametro $i non e' un numero intero. Processo interrotto."
-    # Esco specificando un valore intero di errore
-    exit 5;;
-*)
-    echo "Il parametro $i e' un numero intero."
-    # Controllo se il numero e' positivo
-    if test `expr $i` -le 0
-    then
-        echo "Il numero $i non e' positivo."
-        # Esco specificando un valore intero di errore
-        exit 6
-    else
-        echo "Il numero $i e' positivo."
-    fi;;
-esac
-
-# -------------------------------------------------------------------------------------------------------------- #
-
 ### Richiesta di INPUT BOOLEANO ###
 
 # Chiedo all'utente se vuole visualizzare in ordine alfabetico i file
-echo "Vuoi visualizzare in ordine alfabetico i file? [S/N]"
+echo "Domanda? [S/N]"
 # Leggo la risposta dell'utente
 read -r risposta
 # Controllo la risposta dell'utente
 case $risposta in
 S*|s*|Y*|y*)
-    # Ordino alfabeticamente i file presenti nel file temporaneo
-    sort /tmp/temp$$;;
+    ;;
 N*|n*)
     # Non faccio nulla
     ;;
