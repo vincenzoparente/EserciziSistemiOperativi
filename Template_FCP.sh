@@ -12,7 +12,7 @@ fi
 
 
 # Dichiaro una variabile lista per i path assoluti
-dirList=
+Q=
 
 # Controllo che i parametri rimanenti siano path assoluti e al contempo directory traversabili
 for i; do
@@ -25,7 +25,7 @@ for i; do
         then
             echo "Il parametro $i e' una directory traversabile."
             # Aggiungo il path alla lista
-            dirList="$dirList $i"
+            Q="$Q $i"
         else
             echo "Il parametro $i non e' una directory traversabile. Processo interrotto."
             # Esco specificando un valore intero di errore
@@ -48,7 +48,7 @@ echo "Creo un file temporaneo."
 > /tmp/nomiAssoluti
 
 # Scorro la lista di directory
-for G in $dirList; do
+for G in $Q; do
     # Chiamo lo script ricorsivo
     FCR.sh "$G" "$param" "/tmp/nomiAssoluti"
 done
