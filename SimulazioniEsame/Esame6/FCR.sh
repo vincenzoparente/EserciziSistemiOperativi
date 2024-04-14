@@ -5,7 +5,7 @@ cd "$1"
 
 # Mi assicuro che la directory non sia vuota
 if test "`ls -A`" = ""; then
-    echo "La directory $1 e' vuota. Esplorazione della gerarchia terminata."
+    echo "La directory $1 e' vuota. Directory scartata."
     # Esco con valore 0 perché cio' non e' un errore
     exit 0
 fi

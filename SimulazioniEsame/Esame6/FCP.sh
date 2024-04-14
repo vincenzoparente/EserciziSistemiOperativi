@@ -4,7 +4,7 @@
 if test $# -lt 3
 then
     # In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione
-    echo "Numero parametri errato. Processo interrotto."
+    echo "Numero parametri errato. Utilizzo corretto di $0: $0 numero_intero dir_ass1 dir_ass2. Processo interrotto."
     # Esco specificando un valore intero di errore
     exit 1;
 fi
