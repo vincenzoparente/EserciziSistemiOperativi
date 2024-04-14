@@ -4,7 +4,8 @@
 if test $# -lt 4
 then
     # In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione
-    echo "Numero parametri errato. Processo interrotto."
+    echo "Numero parametri errato. Utilizzo corretto di $0: $0 numero_intero dir_ass1 dir_ass2."
+    echo  "Processo interrotto."
     # Esco specificando un valore intero di errore
     exit 1;
 fi
@@ -47,10 +48,10 @@ export PATH
 echo "Creo un file temporaneo."
 > /tmp/nomiAssoluti
 
-# Scorro la lista di directory
+# Scorro la lista di gerarchie
 for G in $Q; do
     # Chiamo lo script ricorsivo
-    FCR.sh "$G" "$param" "/tmp/nomiAssoluti"
+    FCR.sh "$G" "$" "/tmp/nomiAssoluti"
 done
 
 
