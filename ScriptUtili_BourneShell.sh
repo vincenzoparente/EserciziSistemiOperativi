@@ -206,10 +206,10 @@ esac
 
 # Creo un file temporaneo
 echo "Creo un file temporaneo."
-> /tmp/temp$$
+> /tmp/nomiAssoluti
 
 # Elimino il file temporaneo
 echo "Elimino il file temporaneo."
-rm /tmp/temp$$
+rm /tmp/nomiAssoluti
 
 # -------------------------------------------------------------------------------------------------------------- #
