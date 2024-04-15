@@ -1,0 +1,200 @@
+{
+	"shabang": {
+		"prefix": "shabang",
+		"body": [
+			"#!/bin/sh"
+		]
+	},
+	"controllo parametri lasco": {
+			"prefix": "lasco",
+			"body": [
+			"# Controllo che il numero di parametri rientri nella soglia desiderata",
+			"if test \\$# -lt 3; then",
+				"\t# In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione",
+				"\techo \"Numero parametri errato. Processo interrotto.\"",
+				"\t# Esco specificando un valore intero di errore",
+				"\texit 1;",
+			"fi"]
+	},
+	"controllo parametri stretto": {
+		"prefix": "stretto",
+		"body": [
+		"# Controllo che il numero di parametri rientri nella soglia desiderata",
+		"if test \\$# -ne 3; then",
+			"\t# In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione",
+			"\techo \"Numero parametri errato. Processo interrotto.\"",
+			"\t# Esco specificando un valore intero di errore",
+			"\texit 1;",
+		"fi"]
+	},
+	"aggiornamento path": {
+			"prefix": "aggiornamento path",
+			"body": [
+			"# Aggiungo alla variabile d'ambiente PATH il path corrente",
+			"PATH=`pwd`:\\$PATH",
+			"# Aggiungo le modifiche effettuate alla variabile d'ambiente esportandola",
+			"export PATH"]
+	},
+	"controllo numero intero positivo": {
+		"prefix": "numero intero positivo",
+		"body": [
+		"# Controllo se il parametro e' un numero intero",
+		"case \\$i in",
+		"*[!0-9]*)",
+			"\t# In tal caso il parametro non e' un numero intero, quindi interrompo l'esecuzione",
+			"\techo \"Il parametro $i non e' un numero intero. Processo interrotto.\"",
+			"\t# Esco specificando un valore intero di errore",
+			"\texit 5;;",
+		"*)",
+			"\techo \"Il parametro \\$i e' un numero intero.\"",
+			"\t# Controllo se il numero e' positivo",
+			"\tif test \"\\$i\" -le 0; then",
+				"\t\techo \"Il numero \\$i non e' positivo.\"",
+				"\t\t# Esco specificando un valore intero di errore",
+				"\t\texit 6",
+			"\telse",
+				"\t\techo \"Il numero \\$i e' positivo.\"",
+			"\tfi;;",
+		"esac"]
+	},
+	"controllo stringa": {
+		"prefix": "stringa",
+		"body": [
+		"# Controllo che il parametro \\$1 sia una stringa",
+		"case \\$1 in",
+			"\t*[0-9]*)", 
+				"\t\techo \"Il parametro \\$1 non e' una stringa. Processo interrotto.\"",
+				"\t\t# Esco specificando un valore intero di errore",
+				"\t\texit 9;;",
+			"\t*)",
+				"\t\techo \"Il parametro $1 e' una stringa.\";;",
+		"esac"]
+	},
+	"controllo carattere": {
+		"prefix": "carattere",
+		"body": [
+		"# Verifico che il parametro \\$1 sia un carattere",
+		"case \\$1 in",
+			"\t[a-z,A-Z])",
+				"\t\techo \"Il primo parametro \\$1 e' un carattere.\";;",
+			"\t*)",
+				"\t\techo \"Il primo parametro \\$1 non e' un carattere. Processo interrotto.\"",
+				"\t\t# Esco specificando un valore intero di errore",
+				"\t\texit 2;;",
+		"esac"]
+	},
+	"controllo path assoluto": {
+		"prefix": "path assoluto",
+		"body": [
+			"# Uso un case per verificare se il parametro e' un path assoluto",
+			"case \\$i in",
+			"/*)",
+			    "\techo \"Il parametro \\$i e' un path assoluto.\"",
+			    "\t# Ora verifico l'esistenza della directory e che essa sia traversabile",
+			    "\tif test -d \"\\$i\" -a -x \"\\$i\"; then",
+			        "\t\techo \"Il parametro \\$i e' una directory traversabile.\"",
+			    "\telse",
+			        "\t\techo \"Il parametro \\$i non e' una directory traversabile. Processo interrotto.\"",
+			        "\t\t# Esco specificando un valore intero di errore",
+			        "\t\texit 3",
+			    "\tfi;;",
+			"*)",
+			    "\techo \"Il parametro \\$i non e' un path assoluto. Processo interrotto.\"",
+			    "\t# Esco specificando un valore intero di errore",
+			    "\texit 2;;",
+			"esac"
+		]
+	},
+	"file temporaneo": {
+		"prefix": "temp file",
+		"body": [
+			"# Creo un file temporaneo",
+			"echo \"Creo un file temporaneo.\"",
+			"> /tmp/nomiAssoluti",
+			"",
+			"",
+			"",
+			"# Elimino il file temporaneo",
+			"echo \"Elimino il file temporaneo.\"",
+			"rm /tmp/nomiAssoluti"
+		]
+	},
+	"multipli file temporanei": {
+		"prefix": "multi temp file",
+		"body": [
+			"# Dichiaro una variabile da usare come contatore",
+			"n=1",
+			"# Scorro la lista in un ciclo che utilizza il contatore n",
+			"for G; do",
+				"\t# Creo un file temporaneo per ogni gerarchia",
+				"\t> /tmp/nomiAssoluti-\\$n",
+				"",
+			    "\t# Incremento la variabile contatore di 1 a ogni iterazione",
+			    "\tn=`expr \"\\$n\" + 1`",
+			"done",
+			"# Reimposto il contatore al punto di partenza, ovvero a 1",
+			"n=1",
+			"",
+			"",
+			"",
+			"# Elimino i file temporanei",
+			"# Dichiaro un contatore",
+			"n=1",
+			"for G; do",
+				"\t# Elimino i file temporanei per ogni gerarchia",
+				"\trm /tmp/nomiAssoluti-\\$n",
+				"",
+			    "\t# Incremento la variabile contatore di 1 a ogni iterazione",
+			    "\tn=`expr \"\\$n\" + 1`",
+			"done"
+		]
+	},
+	"input booleano": {
+		"prefix": "input booleano",
+		"body": [
+			"# Interrogo l'utente",
+			"echo \"Domanda? [S/N]\"",
+			"# Leggo la risposta dell'utente",
+			"read -r risposta",
+			"# Controllo la risposta dell'utente",
+			"case \\$risposta in",
+			"S*|s*|Y*|y*)",
+			    "\t;;",
+			"N*|n*)",
+			    "\t# Non faccio nulla",
+			    "\t;;",
+			"*)",
+			    "# Risposta non valida",
+			    "echo \"Risposta non valida.\";;",
+			"esac"
+		]
+	},
+	"for": {
+		"prefix": "for",
+		"body": [
+			"# Dichiaro una variabile da usare come contatore",
+			"n=1",
+			"# Scorro la lista in un ciclo che utilizza il contatore n",
+			"for G; do",
+			    "\t# Incremento la variabile contatore di 1 a ogni iterazione",
+			    "\tn=`expr \"\\$n\" + 1`",
+			"done",
+			"# Reimposto il contatore al punto di partenza, ovvero a 1",
+			"n=1"
+		]
+	},
+	"shift": {
+		"prefix": "shift",
+		"body": [
+			"# Shift per scorrere i parametri piu' agevolmente",
+			"shift"
+		]
+	},
+	"estrazione linea da file": {
+		"prefix": "estrazione linea",
+		"body": [
+			"# Estraggo la riga desiderata dal file e la stampo a video",
+			"head -n \\$n \\$file | tail -n 1"
+		]
+	}
+}
