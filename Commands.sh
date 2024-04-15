@@ -242,7 +242,7 @@ $ cp file destination       # (copy)
                 # si sottointende che si vuole copiare una directory
 
 # Creare un link tra due file
-$ ln file1 file2       # (link)
+$ ln filepath1 filepath2       # (link)
     # options: 
     -s          # Instaura un link software
 
