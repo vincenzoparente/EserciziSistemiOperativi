@@ -31,7 +31,7 @@ esac
 # Salvo il primo parametro in una variabile
 X=$1
 
-# Shift per scartare il primo parametro
+# Shift per scorrere i parametri piu' agevolmente
 shift
 
 # Dichiaro una variabile lista per i path assoluti
