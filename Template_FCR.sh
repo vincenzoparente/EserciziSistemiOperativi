@@ -10,11 +10,10 @@ if test "`ls -A`" = ""; then
     exit 0
 fi
 
-# Controllo che la directory contenga almeno un file con terminazione .$2
-for F in *; do
-    # Verifico se $F e' una directory e se e' traversabile
-    if test -d "$F" -a -x "$F"; then
-        # In tal caso chiamo lo script ricorsivo passandogli il path assoluto della directory
-        FCR.sh "$1/$F" "$2" "$3"
+# Cerco directory da esplorare all'interno della directory corrente
+for D in *; do
+    if test -d "$D" -a -x "$D"; then
+        # Chiamo lo script ricorsivo entrando nella directory
+        FCR.sh "$1/$D" "$2" "$3"
     fi
 done
