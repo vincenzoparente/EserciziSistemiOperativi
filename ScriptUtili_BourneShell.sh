@@ -27,9 +27,9 @@ export PATH
 
 ### Controllo PARAMETRI STRETTO ###
 
-# Controllo che il numero di parametri sia esattamente quello desiderato
+# Controllo che il numero di parametri rientri nella soglia desiderata
 if test $# -ne 3; then
-    # In tal caso il numero dei parametri e' diverso da quello richiesto, quindi interrompo l'esecuzione
+    # In tal caso il numero dei parametri non riesntra nell'intervallo desiderato, quindi interrompo l'esecuzione
     echo "Numero parametri errato. Processo interrotto."
     # Esco specificando un valore intero di errore
     exit 1;
@@ -55,7 +55,7 @@ fi
 case $i in
 *[!0-9]*)
     # In tal caso il parametro non e' un numero intero, quindi interrompo l'esecuzione
-    echo "Il parametro $i non e' un numero intero. Processo interrotto."
+    echo "Il parametro i non e' un numero intero. Processo interrotto."
     # Esco specificando un valore intero di errore
     exit 5;;
 *)
@@ -74,21 +74,21 @@ esac
 
 ### Verifica che un PARAMETRO sia una STRINGA ###
 
-# Controllo che il secondo parametro sia una stringa
+# Controllo che il parametro $1 sia una stringa
 case $1 in
-    *[0-9]*) 
+    *[0-9]*)
         echo "Il parametro $1 non e' una stringa. Processo interrotto."
         # Esco specificando un valore intero di errore
         exit 9;;
-    *) 
-        echo "Il parametro $1 e' una stringa.";;
+    *)
+        echo "Il parametro  e' una stringa.";;
 esac
 
 # -------------------------------------------------------------------------------------------------------------- #
 
 ### Verifica che un PARAMETRO sia un CARATTERE ###
 
-# Verifico che il primo parametro sia un carattere
+# Verifico che il parametro $1 sia un carattere
 case $1 in
     [a-z,A-Z])
         echo "Il primo parametro $1 e' un carattere.";;
@@ -158,14 +158,14 @@ esac
 ### Ciclo con CONTATORE ###
 
 # Dichiaro una variabile da usare come contatore
-J=1
-# Scorro la lista in un ciclo che utilizza il contatore J
-for i; do
+n=1
+# Scorro la lista in un ciclo che utilizza il contatore n
+for G; do
     # Incremento la variabile contatore di 1 a ogni iterazione
-    J=`expr "$J" + 1`
+    n=`expr "$n" + 1`
 done
 # Reimposto il contatore al punto di partenza, ovvero a 1
-J=1
+n=1
 
 # -------------------------------------------------------------------------------------------------------------- #
 
@@ -183,7 +183,7 @@ done
 
 ### Richiesta di INPUT BOOLEANO ###
 
-# Chiedo all'utente se vuole visualizzare in ordine alfabetico i file
+# Interrogo l'utente
 echo "Domanda? [S/N]"
 # Leggo la risposta dell'utente
 read -r risposta
@@ -195,21 +195,54 @@ N*|n*)
     # Non faccio nulla
     ;;
 *)
-    # Risposta non valida
-    echo "Risposta non valida.";;
+# Risposta non valida
+echo "Risposta non valida.";;
 esac
 
 # -------------------------------------------------------------------------------------------------------------- #
 
-### Creazione FILE TEMPORANEO CON PID ###
+### Creazione FILE TEMPORANEO SENZA PID ###
 ### Eliminazione FILE TEMPORANEO ###
 
 # Creo un file temporaneo
 echo "Creo un file temporaneo."
 > /tmp/nomiAssoluti
 
+
+
 # Elimino il file temporaneo
 echo "Elimino il file temporaneo."
 rm /tmp/nomiAssoluti
+
+# -------------------------------------------------------------------------------------------------------------- #
+
+## Creazione di MULTIPLE FILE TEMPORANEI ##
+## Eliminazione di MULTIPLE FILE TEMPORANEI ##
+
+# Dichiaro una variabile da usare come contatore
+n=1
+# Scorro la lista in un ciclo che utilizza il contatore n
+for G; do
+    # Creo un file temporaneo per ogni gerarchia
+    > /tmp/nomiAssoluti-$n
+
+    # Incremento la variabile contatore di 1 a ogni iterazione
+    n=`expr "$n" + 1`
+done
+# Reimposto il contatore al punto di partenza, ovvero a 1
+n=1
+
+
+
+# Elimino i file temporanei
+# Dichiaro un contatore
+n=1
+for G; do
+    # Elimino i file temporanei per ogni gerarchia
+    rm /tmp/nomiAssoluti-$n
+
+    # Incremento la variabile contatore di 1 a ogni iterazione
+    n=`expr "$n" + 1`
+done
 
 # -------------------------------------------------------------------------------------------------------------- #
