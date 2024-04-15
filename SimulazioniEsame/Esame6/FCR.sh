@@ -12,14 +12,17 @@ fi
 
 # Controllo che la directory contenga almeno un file con terminazione .$2
 for F in *; do
-    if test -d "$F" -a -x "$F"; then
+    if test -f "$F" -a -r "$F" -a "`wc -l < "$F"`" -eq "$2"; then
+        echo "Il file $F contiene $2 righe."
+        # Scrivo il path assoluto del file nel file temporaneo
+        echo "$1/$F" >> "$3"
+    fi
+done
+
+# Cerco directory da esplorare all'interno della directory corrente
+for D in *; do
+    if test -d "$D" -a -x "$D"; then
         # Chiamo lo script ricorsivo entrando nella directory
-        FCR.sh "$1/$F" "$2" "$3"
-    else
-        if test -f "$F" -a -r "$F" -a "`wc -l < "$F"`" -eq "$2"; then
-            echo "Il file $F contiene $2 righe."
-            # Scrivo il path assoluto del file nel file temporaneo
-            echo "$1/$F" >> "$3"
-        fi
+        FCR.sh "$1/$D" "$2" "$3"
     fi
 done

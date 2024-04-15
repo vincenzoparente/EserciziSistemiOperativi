@@ -105,6 +105,17 @@
 			"esac"
 		]
 	},
+	"controllo directory vuota": {
+		"prefix": "directory vuota",
+		"body": [
+			"# Mi assicuro che la directory non sia vuota",
+			"if test \"`ls -A`\" = \"\"; then",
+			    "\techo \"La directory \\$1 e' vuota. Directory scartata.\"",
+			    "\t# Esco con valore 0 perché cio' non e' un errore",
+			    "\texit 0",
+			"fi"
+		]
+	},
 	"file temporaneo": {
 		"prefix": "temp file",
 		"body": [
@@ -195,6 +206,25 @@
 		"body": [
 			"# Estraggo la riga desiderata dal file e la stampo a video",
 			"head -n \\$n \\$file | tail -n 1"
+		]
+	},
+	"cd": {
+		"prefix": "cd",
+		"body": [
+			"# Mi sposto nella directory passata come primo parametro",
+			"cd \\$1"
+		]
+	},
+	"ciclo per la ricorsione": {
+		"prefix": "recursive for",
+		"body": [
+			"# Cerco directory da esplorare all'interno della directory corrente",
+			"for D in *; do",
+				"\tif test -d \"\\$D\" -a -x \"\\$D\"; then",
+					"\t\t# Chiamo lo script ricorsivo entrando nella directory",
+					"\t\tFCR.sh \"\\$1/\\$D\" \"\\$2\" \"\\$3\"",
+				"\tfi",
+			"done"
 		]
 	}
 }
