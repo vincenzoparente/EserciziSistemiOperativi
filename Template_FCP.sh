@@ -15,25 +15,24 @@ fi
 # Dichiaro una variabile lista per i path assoluti
 Q=
 
-# Controllo che i parametri rimanenti siano path assoluti e al contempo directory traversabili
-for i; do
+# Scorro i parametri
+for G; do
     # Uso un case per verificare se il parametro e' un path assoluto
-    case $i in
+    case $G in
     /*)
-        echo "Il parametro $i e' un path assoluto."
+        echo "Il parametro $G e' un path assoluto."
         # Ora verifico l'esistenza della directory e che essa sia traversabile
-        if test -d "$i" -a -x "$i"
-        then
-            echo "Il parametro $i e' una directory traversabile."
-            # Aggiungo il path alla lista
-            Q="$Q $i"
+        if test -d "$G" -a -x "$G"; then
+            echo "Il parametro $G e' una directory traversabile."
+            # Aggiorno la lista dei path assoluti
+            Q="$Q $G"
         else
-            echo "Il parametro $i non e' una directory traversabile. Processo interrotto."
+            echo "Il parametro $G non e' una directory traversabile. Processo interrotto."
             # Esco specificando un valore intero di errore
             exit 3
         fi;;
     *)
-        echo "Il parametro $i non e' un path assoluto. Processo interrotto."
+        echo "Il parametro $G non e' un path assoluto. Processo interrotto."
         # Esco specificando un valore intero di errore
         exit 2;;
     esac

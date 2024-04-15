@@ -86,23 +86,31 @@
 	"controllo path assoluto": {
 		"prefix": "path assoluto",
 		"body": [
-			"# Uso un case per verificare se il parametro e' un path assoluto",
-			"case \\$i in",
-			"/*)",
-			    "\techo \"Il parametro \\$i e' un path assoluto.\"",
-			    "\t# Ora verifico l'esistenza della directory e che essa sia traversabile",
-			    "\tif test -d \"\\$i\" -a -x \"\\$i\"; then",
-			        "\t\techo \"Il parametro \\$i e' una directory traversabile.\"",
-			    "\telse",
-			        "\t\techo \"Il parametro \\$i non e' una directory traversabile. Processo interrotto.\"",
-			        "\t\t# Esco specificando un valore intero di errore",
-			        "\t\texit 3",
-			    "\tfi;;",
-			"*)",
-			    "\techo \"Il parametro \\$i non e' un path assoluto. Processo interrotto.\"",
-			    "\t# Esco specificando un valore intero di errore",
-			    "\texit 2;;",
-			"esac"
+			"# Dichiaro una variabile lista per i path assoluti",
+			"Q=",
+			"",
+			"# Scorro i parametri",
+			"for G; do",
+			"\t# Uso un case per verificare se il parametro e' un path assoluto",
+			"\tcase \\$G in",
+			"\t/*)",
+			    "\t\techo \"Il parametro \\$G e' un path assoluto.\"",
+			    "\t\t# Ora verifico l'esistenza della directory e che essa sia traversabile",
+			    "\t\tif test -d \"\\$G\" -a -x \"\\$G\"; then",
+			        "\t\t\techo \"Il parametro \\$G e' una directory traversabile.\"",
+					"\t\t\t# Aggiorno la lista dei path assoluti",
+					"\t\t\tQ=\"\\$Q \\$G\"",
+			    "\t\telse",
+			        "\t\t\techo \"Il parametro \\$G non e' una directory traversabile. Processo interrotto.\"",
+			        "\t\t\t# Esco specificando un valore intero di errore",
+			        "\t\t\texit 3",
+			    "\t\tfi;;",
+			"\t*)",
+			    "\t\techo \"Il parametro \\$G non e' un path assoluto. Processo interrotto.\"",
+			    "\t\t# Esco specificando un valore intero di errore",
+			    "\t\texit 2;;",
+			"\tesac",
+			"done"
 		]
 	},
 	"controllo directory vuota": {
@@ -224,6 +232,16 @@
 					"\t\t# Chiamo lo script ricorsivo entrando nella directory",
 					"\t\tFCR.sh \"\\$1/\\$D\" \"\\$2\" \"\\$3\"",
 				"\tfi",
+			"done"
+		]
+	},
+	"ciclo di scorrimento delle gerarchie": {
+		"prefix": "scorrimento gerarchie",
+		"body": [
+			"# Scorro la lista di gerarchie",
+			"for G in \\$Q; do",
+			    "\t# Chiamo lo script ricorsivo",
+			    "\tFCR.sh \"\\$G\" \"\\$\" \"/tmp/nomiAssoluti\"",
 			"done"
 		]
 	}
