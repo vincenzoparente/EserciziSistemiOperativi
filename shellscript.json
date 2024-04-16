@@ -14,7 +14,8 @@
 				"\techo \"Numero parametri errato. Processo interrotto.\"",
 				"\t# Esco specificando un valore intero di errore",
 				"\texit 1;",
-			"fi"]
+			"fi"
+		]
 	},
 	"controllo parametri stretto": {
 		"prefix": "check params strict",
@@ -25,7 +26,8 @@
 			"\techo \"Numero parametri errato. Processo interrotto.\"",
 			"\t# Esco specificando un valore intero di errore",
 			"\texit 1;",
-		"fi"]
+		"fi"
+		]
 	},
 	"aggiornamento path": {
 			"prefix": "update path",
@@ -33,7 +35,8 @@
 			"# Aggiungo alla variabile d'ambiente PATH il path corrente",
 			"PATH=`pwd`:\\$PATH",
 			"# Aggiungo le modifiche effettuate alla variabile d'ambiente esportandola",
-			"export PATH"]
+			"export PATH"
+		]
 	},
 	"controllo numero intero positivo": {
 		"prefix": "check int pos",
@@ -69,7 +72,8 @@
 			"\texit 9;;",
 		"*)",
 			"\techo \"Il parametro \\$1 e' una stringa.\";;",
-		"esac"]
+		"esac"
+		]
 	},
 	"controllo carattere": {
 		"prefix": "check char",
@@ -82,7 +86,8 @@
 				"\t\techo \"Il primo parametro \\$1 non e' un carattere. Processo interrotto.\"",
 				"\t\t# Esco specificando un valore intero di errore",
 				"\t\texit 2;;",
-		"esac"]
+		"esac"
+		]
 	},
 	"controllo path assoluto": {
 		"prefix": "abs path",
