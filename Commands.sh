@@ -17,14 +17,15 @@ $ export LC_COLLATE
 # -- MATCH --
 # * fa match con qualunque stringa, anche vuota
 # ? fa match con un qualunque carattere, ma non con il carattere vuoto
-# [abc] (fa schifo) oppure [a,b,c] fa match con qualunque stringa che contiene il carattere compreso tra quelli nell'insieme. Può essere negato con ! all'interno delle quadre
-# [c1-cn] fa match con le stringhe che contengono i caratteri contenuti nel range di valori specificato. Può essere negato con ! all'interno delle quadre
+# [abc] (fa schifo) oppure [a,b,c] fa match con qualunque stringa che contiene almeno uno dei caratteri tra quelli nell'insieme. Può essere negato con ! all'interno delle quadre
+# [c1-cn] fa match con le stringhe che contengono almeno un carattere tra quelli nel range specificato (estremi inclusi). Può essere negato con ! all'interno delle quadre
 # Utilizzi notevoli: 
-#   [abc]*              nomi che iniziano per 'a', 'b' o 'c'
-#   *[0-9]              nomi che terminano con un carattere compreso tra '0' e '9'
-#   [a-p,1-7]*[!0-9]    nomi che iniziano con un carattere compreso tra 'a' e 'p' o tra '1' e '7' e che non terminano con un carattere compreso tra '0' e '9'
-# . i nomi dei file che iniziano con "." UNIX li considera nascosti
-# \ escape (per esprimere la volontà per esempio di usare il carattere '*' piuttosto che il corrispondente metacarattere)
+#   [abc]*              stringhe che iniziano per 'a', 'b' o 'c'
+#   *[0-9]              stringhe che terminano con un carattere compreso tra '0' e '9' (dunque che terminano con un numero intero positivo)
+#   *[0-9]*             stringhe che in qualunque posizione devono contenere un carattere compreso tra '0' e '9'. Chiaramente questo pattern fa match solo con numeri interi positivi
+#   [a-p,1-7]*[!0-9]    nomi che iniziano con un carattere compreso tra 'a' e 'p' o tra '1' e '7' e che non terminano con un numero intero positivo
+# . i nomi dei file che iniziano con "." UNIX li considera nascosti. Per fare match con le stringhe che contengono un . e' obbligatorio usare "*\.*" perche' il punto e' classificato come metacarattere
+# \ carattere di escape che consente di ignorare i metacaratteri
 #
 # -- RIDIREZIONI --
 # | piping
@@ -37,7 +38,7 @@ $ export LC_COLLATE
 #   2 stampa su stderr
 #   se il numero non è specificato, la destinazione è implicita
 # Tutto ciò che viene ridiretto su /dev/null viene perso
-# Tutto ciò che viene ridiretto su /dev/tty è assicurato che verrà visualizzato sul terminale corrente
+# Tutto ciò che viene ridiretto su /dev/tty (teletypewriter) è assicurato che verrà visualizzato sul terminale corrente
 # Se volessi ridirigere sia stdout che stderr su un file dovrei scrivere:
 #   ls -l z* p* > file 2>&1         dove ciò che indica tale volontà è 2>&1
 
@@ -52,6 +53,22 @@ $ export LC_COLLATE
 # è sottointeso che vada inserito il path assoluto o relativo.
 
 
+
+# --------- COMANDI-FILTRO ---------
+# Un comando filtro e' tale nel momento in cui funziona prendendo in input un flusso (stdin) o un generico file (in RIDIREZIONE)
+# e restituendo un flusso in output (stdout o file generico in ridirezione). Si dice "filtro" perche' filtra e/o manipola dati secondo determinati criteri
+$ cat
+$ more
+$ sort
+$ grep
+$ wc
+$ head
+$ tail
+$ rev
+$ tee
+
+
+
 # Effettuare il logout
 $ exit
 # terminare un processo (ha senso che sia una sottoshell) con un determinato valore di ritorno
@@ -64,12 +81,13 @@ $ date
 # Stampare su stdout il contenuto di uno o più file
 $ cat string        # (catenate) versione comando-filtro
 $ cat file          # versione comando
+# cat accetta i pattern:
 # se ad esempio mi trovo in una cartella in cui ci sono più file che iniziano per f e scrivo
 $ cat f*
 # verranno stampati su stdout i contenuti di tutti i file concatenati indistintamente (difficile leggibilità)
 # è possibile chiamare il comando cat senza parametri
 $ cat
-# esso stamperà su stdout ciò che l'utente inserirà da tastiera
+# esso stamperà su stdout ciò che l'utente inserirà da tastiera (stdin)
 
 # more è comando-filtro, ma esiste anche la versione comando
 # Stampare su stdout il contenuto di uno o più file con intestazione e separatore
@@ -88,7 +106,7 @@ $ id
 
 # Visualizzare gli utenti attivi sul sistema
 $ who
-$ w         # formato dell'output diverso, ma informazioni analoghe
+$ w         # formato dell'output diverso (piu' completo), ma informazioni analoghe
 
 # Per sapere dove si trova un file eseguibile
 $ which exe         # viene verificato che si trovi in uno dei percorsi contenuti in PATH
@@ -106,11 +124,10 @@ $ bash          # Bourne Again Shell
                 # di certi comandi espandendoli
                 # Esempio: $ ls -l file*
                 #          + ls -l file file1 file2 file3 file4 filetmp      <-- questa si chiama espansione
-                #          [classico output del comando ls -l file*]
-    -v          # stampa le linee del file comandi come sono lette dalla shell
-# è possibile assegnare un file.sh a una shell per eseguirlo
+                # utile per sapere se i match vengono eseguiti correttamente
+    -v          # utile per stampare le linee di un eventuale file comandi invocato così come sono lette dalla shell
+# infatti è possibile assegnare un file.sh a una shell per eseguirlo
 $ sh file.sh
-# chiaramente l'estensione del file deve corrispondere alla shell con la quale lo si esegue
 
 # Ottenere la lista dei processi attivi nel sistema della sessione interattiva corrente
 $ ps    # (process status)
@@ -156,8 +173,8 @@ $ ls [dir]      # (list) se passato l'argomento dir, verrà fatta la lista del s
                     # considerandola quindi come un file, senza stamparne dunque il contenuto
     -R              # (-Recursive) lista ricorsiva dei file contenuti nella gerarchia a partire
                     # dalla directory corrente a tutti i file o directory contenuti 
-                    # in essa (non fa la lista dei contenuti di eventuali altre
-                    # sottodirectory contenute nella directory corrente)
+                    # in essa (fa la lista dei contenuti di eventuali altre
+                    # sottodirectory ricorsivamente)
     -i              # lista degli i-number dei file (oltre al loro nome)
     -r              # (-reverse) lista dei file in ordine opposto al normale ordine alfabetico
     -t              # (-time) lista dei nomi dei file in ordine di ultima modifica
@@ -167,6 +184,7 @@ $ ls [dir]      # (list) se passato l'argomento dir, verrà fatta la lista del s
 $ man comando       # (manual)
     # options:
     -w          # (where) per sapere dove si trova il manuale di un comando
+                # (equivalente del comando whereis, con un output leggermente diverso)
 
 # Conoscere il path corrente
 $ pwd           # (print working directory)
@@ -181,7 +199,7 @@ $ rmdir dir
 
 # Spostarsi dalla directory corrente al percorso destinazione specificato
 $ cd destinazione       # (change directory)
-$ cd            # questa variante conduce alla home
+$ cd                    # questa variante conduce direttamente alla home
 
 # Stampare in output la stringa consegnata come parametro
 $ echo stringa
@@ -225,29 +243,29 @@ $ chmod [u | g | o | a][+ | -][r | w | x]      # (change mod)
 #   w = write
 #   x = execute
 # al posto di [u | g | o | a] [+ | -][r | w | x] è possibile utilizzare numeri
-# in base 10 o 8 che verranno convertiti in binario dal sistema
+# in ottale che verranno convertiti in binario dal sistema
 # esempi:
-$ chmod 600 file       # da base 10 a binario conferisce il diritto di lettura
-$ chmod 640 file        # da base 8 a binario 
+$ chmod 600 file       # in ottale conferisce il diritto di lettura all'utente e nessun diritto a group e others
+$ chmod 640 file       # in ottale conferisce il diritto di lettura all'utente, scrittura a group e nessun diritto a others
 
 # (Riservati al superuser) cambiano rispettivamente il proprietario o il gruppo proprietario del file
 $ chown user file       # (change owner)
 $ chown group file
 
 # Copiare un file in un'altra directory
-$ cp file destination       # (copy)
+$ cp source destination       # (copy)
     # options:
     -p          # (preserve) nella copia conserva i dati timestamps e ownership
     -r          # (recursive) indica che la copia deve essere ricorsiva, dunque
                 # si sottointende che si vuole copiare una directory
 
 # Creare un link tra due file
-$ ln filepath1 filepath2       # (link)
+$ ln file1 file2       # (link)
     # options: 
     -s          # Instaura un link software
 
 # Spostare o rinominare un file
-$ mv file destination       # (move) spostare
+$ mv source destination       # (move) spostare
 $ mv file newname           # rinominare
 
 # Rimuovere un file
@@ -259,8 +277,8 @@ $ rm dir
     -r          # (recursive) indica che l'eliminazione deve essere ricorsiva ed 
                 # è una options necessaria se la directory è vuota
 
-# Metodo molto comodo per vuotare un file
-$ > file        # (viene ridirezionata una stringa vuota nel file)
+# Metodo molto comodo per creare un file vuoto o vuotarne uno esistente
+$ > file        # (viene ridirezionata una stringa vuota "" nel file)
 
 # sort è comando-filtro, ma esiste anche la versione comando
 # Ordina le linee dello standard input
@@ -274,9 +292,11 @@ $ sort file     # versione comando
     -C          # funziona come la precedente, ma non stampa la prima linea fuori ordine
     -u          # (unique) elimina i duplicati
 
-# Promuovere una variabile di shell in variabile d'ambiente
+# Promuovere una variabile di shell a variabile d'ambiente 
 $ export variabile
-# tutte le volte che una variabile d'ambiente è stata modificata per ragioni storiche, conviene rifare l'export
+# tutte le volte che una variabile d'ambiente è stata modificata, per ragioni storiche, conviene rifare l'export.
+# L'operazione di promozione ha visibilità verso il basso, ma non verso l'alto! Le modifiche a una variabile d'ambiente
+# effettuate in un sottoprocesso saranno inefficaci per il processo padre
 
 # grep è comando-filtro, ma esiste anche la versione comando
 # Cerca un certo pattern (caratteri vicini, non per forza parole) nella stringa o nel file specificato
@@ -310,20 +330,16 @@ $ wc file           # versione comando
 # head è comando-filtro, ma esiste anche la versione comando
 # Riporta le prime -numerolinee linee (se esistono). Se -numerolinee non è specificato
 # vengono riportate fino a 10 linee di default
-$ head -numerolinee string       # versione comando-filtro
-$ head -numerolinee file         # versione comando
-    # options:
-    -n          # esplicita le prime n righe, se esistono (n va sostituito da un numero intero). In alcuni casi se un comando del 
-                # tipo -3 non funziona, allora usare -n 3
+$ head -n number string       # versione comando-filtro
+$ head -n number file         # versione comando
+# dove number è il numero di linee che voglio selezionare in testa
 
 # tail è comando-filtro, ma esiste anche la versione comando
 # Riporta le ultime -numerolinee linee (se esistono). Se -numerolinee non è specificato
 # vengono riportate fino a 10 linee di default
-$ tail -numerolinee string       # versione comando-filtro
-$ tail -numerolinee file         # versione comando
-    # options:
-    -n          # esplicita le ultime n righe, se esistono (n va sostituito da un numero intero). In alcuni casi se un comando del 
-                # tipo -3 non funziona, allora usare -n 3
+$ tail -n number string       # versione comando-filtro
+$ tail -n number file         # versione comando
+# dove number è il numero di linee che voglio selezionare in coda
 
 # rev è comando-filtro, ma esiste anche la versione comando
 # Rovescia le linee dello standard input (in alcune distribuzioni questo comando è stato rimosso)
@@ -336,7 +352,7 @@ $ gcc -o nomeoutput -Wall       # GNU C Compiler
 # compilazione verrà chiamato "a.out"
 # -Wall serve per attivare tutti i warning
 
-# PRIMA DI LANCIARE UN FILE COMANDI CONFERIRE SEMPRE I DIRITTI DI ESECUZIONE CHE SONO DISATTIVATI DI DEFAULT
+##### PRIMA DI LANCIARE UN FILE COMANDI CONFERIRE SEMPRE I DIRITTI DI ESECUZIONE! ##### (SONO DISATTIVATI DI DEFAULT!) #####
 # Lanciare un file comandi
 $ file.sh       # prima di lanciarlo magari assicurarsi che la shell che si sta usando corrisponda con l'estensione
 # se la directory corrente non è salvata nella variabile d'ambiente PATH
@@ -347,7 +363,7 @@ $ sh file.sh        # chiaramente la shell deve essere quella corrispondente all
 # Visualizzare l'ambiente corrente di un processo shell
 $ env
 
-# tee è un comando filtro
+# tee è un comando-filtro
 # Passa il contenuto di stdin sia su stdout che sul file
 $ tee file      # (pipe tee, in italiano raccordo a T)
 
@@ -436,7 +452,7 @@ do
 comandi
 done
 # alternativa opposta al while
-until lista-comandi     # l'iterazione continua finchè il valore di ritorno dell'ULTIMO COMANDO DELLA LISTA ha insuccesso
+until lista-comandi     # l'iterazione continua finchè il valore di ritorno dell'ULTIMO COMANDO DELLA LISTA ha INsuccesso
 do
 comandi
 done
