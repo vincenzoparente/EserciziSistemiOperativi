@@ -63,9 +63,10 @@ for G; do
     esac
 done
 
-# Creo un file temporaneo
-echo "Creo un file temporaneo."
-> /tmp/nomiAssoluti
+# Creo i file temporanei
+echo "Creo i file temporanei."
+> /tmp/nomiAssoluti$S1
+> /tmp/nomiAssoluti$S2
 
 # Aggiungo alla variabile d'ambiente PATH il path corrente
 PATH=`pwd`:$PATH
