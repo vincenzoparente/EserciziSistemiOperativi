@@ -86,7 +86,7 @@ TOT2=`wc -l < "/tmp/nomiAssoluti$S2"`
 echo "Il numero di file trovati con estensione $S2 e': $TOT2"
 
 # Controllo se $TOT1 <= $TOT2
-if test $TOT1 -le $TOT2; then
+if test "$TOT1" -le "$TOT2"; then
     # Interrogo l'utente
     echo "Mattia, inserisci un numero intero compreso tra 1 e $TOT1: "
     # Leggo la risposta dell'utente
@@ -114,6 +114,7 @@ if test $TOT1 -le $TOT2; then
     head -n "$X" "/tmp/nomiAssoluti$S2" | tail -n 1
 fi
 
-# Elimino il file temporaneo
-echo "Elimino il file temporaneo."
-rm /tmp/nomiAssoluti
+# Elimino i file temporanei
+echo "Elimino i file temporanei."
+rm "/tmp/nomiAssoluti$S1"
+rm "/tmp/nomiAssoluti$S2"
