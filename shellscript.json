@@ -221,7 +221,7 @@
 		"prefix": "input int",
 		"body": [
 			"# Interrogo l'utente",
-			"echo \"Inserisci un numero compreso tra 1 e $N\"",
+			"echo -n \"Inserisci un numero compreso tra 1 e $N: \"",
 			"# Leggo la risposta dell'utente",
 			"# Controllo se il parametro e' un numero intero",
 			"case \\$X in",

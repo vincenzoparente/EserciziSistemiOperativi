@@ -210,6 +210,7 @@ $ echo ciao?        # ottengo in output tutti i file o directory contenuti nella
                     # la stringa "ciao?". Lo stesso vale per le stringhe contenenti "*"
 $ echo $?           # in ouput stampa un intero che determina se il comando precedente ha avuto
                     # successo (0) o insuccesso (qualunque numero diverso da 0)
+$ echo -n           # non termina la stringa stampata con il \n
 
 # Modifica la data e l'ora di ultimia modifica di un file. Se il file non esiste, viene creato
 $ touch file
