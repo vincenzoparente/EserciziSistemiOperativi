@@ -288,6 +288,7 @@ $ grep pattern file     # versione comando
     -i          # (ignore case) non fa differenza tra maiuscole e minuscole (non è case sensitive)
     -v          # (invert match) inverte il senso del comando, quindi stampa tutte le linee
                 # che NON contengono il pattern specificato
+    -c          # (count) conta le occorrenze del pattern
 # Il pattern può anche essere specificato tra apici per evitare errori involntari: 'pattern'
 # Per cercare tutte le righe che iniziano con un certo pattern: '^pattern'
 # Per cercare tutte le righe che terminano con un certo pattern: 'pattern$'
