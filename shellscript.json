@@ -63,7 +63,7 @@
 		"body": [
 		"# Controllo che il parametro \\$1 sia una stringa",
 		"case \\$1 in",
-		"*[0-9]*)", 
+		"*/*)", 
 			"\techo \"Il parametro \\$1 non e' una stringa. Processo interrotto.\"",
 			"# Esco specificando un valore intero di errore",
 			"\texit 9;;",
