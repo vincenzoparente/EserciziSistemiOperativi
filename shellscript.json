@@ -6,7 +6,7 @@
 		]
 	},
 	"controllo parametri lasco": {
-			"prefix": "lasco",
+			"prefix": "check params loose",
 			"body": [
 			"# Controllo che il numero di parametri rientri nella soglia desiderata",
 			"if test \\$# -lt 3; then",
@@ -17,7 +17,7 @@
 			"fi"]
 	},
 	"controllo parametri stretto": {
-		"prefix": "stretto",
+		"prefix": "check params strict",
 		"body": [
 		"# Controllo che il numero di parametri rientri nella soglia desiderata",
 		"if test \\$# -ne 3; then",
@@ -28,7 +28,7 @@
 		"fi"]
 	},
 	"aggiornamento path": {
-			"prefix": "aggiornamento path",
+			"prefix": "update path",
 			"body": [
 			"# Aggiungo alla variabile d'ambiente PATH il path corrente",
 			"PATH=`pwd`:\\$PATH",
@@ -36,7 +36,7 @@
 			"export PATH"]
 	},
 	"controllo numero intero positivo": {
-		"prefix": "numero intero positivo",
+		"prefix": "check int pos",
 		"body": [
 		"# Controllo se il parametro e' un numero intero",
 		"case \\$i in",
@@ -55,23 +55,24 @@
 			"\telse",
 				"\t\techo \"Il numero \\$i e' positivo.\"",
 			"\tfi;;",
-		"esac"]
+		"esac"
+		]
 	},
 	"controllo stringa": {
-		"prefix": "stringa",
+		"prefix": "check string",
 		"body": [
 		"# Controllo che il parametro \\$1 sia una stringa",
 		"case \\$1 in",
-			"\t*[0-9]*)", 
-				"\t\techo \"Il parametro \\$1 non e' una stringa. Processo interrotto.\"",
-				"\t\t# Esco specificando un valore intero di errore",
-				"\t\texit 9;;",
-			"\t*)",
-				"\t\techo \"Il parametro $1 e' una stringa.\";;",
+		"*[0-9]*)", 
+			"\techo \"Il parametro \\$1 non e' una stringa. Processo interrotto.\"",
+			"# Esco specificando un valore intero di errore",
+			"\texit 9;;",
+		"*)",
+			"\techo \"Il parametro \\$1 e' una stringa.\";;",
 		"esac"]
 	},
 	"controllo carattere": {
-		"prefix": "carattere",
+		"prefix": "check char",
 		"body": [
 		"# Verifico che il parametro \\$1 sia un carattere",
 		"case \\$1 in",
@@ -84,7 +85,7 @@
 		"esac"]
 	},
 	"controllo path assoluto": {
-		"prefix": "path assoluto",
+		"prefix": "abs path",
 		"body": [
 			"# Dichiaro una variabile lista per i path assoluti",
 			"Q=",
@@ -113,8 +114,31 @@
 			"done"
 		]
 	},
+	"controllo se il file è leggibile e ha estensione": {
+		"prefix": "file read",
+		"body": [
+			"for F in *; do",
+			"\tif test -f \"\\$F\" -a -r \"\\$F\"; then",
+    		    "\t\t",
+    		"\tfi",
+			"done"
+		]
+	},
+	"controllo estensione del file": {
+		"prefix": "file ext",
+		"body": [
+			"# Controllo se il file ha estensione \\$2",
+    		"case \\$F in",
+    		"*.$2)",
+    		    "\techo \"Il file `pwd`/\\$F ha estensione \\$2.\"",
+    		    "\techo \"`pwd`/\\$F\" >> \"\\$3\";;",
+    		"*)",
+    		    "\t;;",
+    		"esac"
+		]
+	},
 	"controllo directory vuota": {
-		"prefix": "directory vuota",
+		"prefix": "dir empty",
 		"body": [
 			"# Mi assicuro che la directory non sia vuota",
 			"if test \"`ls -A`\" = \"\"; then",
@@ -139,7 +163,7 @@
 		]
 	},
 	"multipli file temporanei": {
-		"prefix": "multi temp file",
+		"prefix": "multi-temp file",
 		"body": [
 			"# Dichiaro una variabile da usare come contatore",
 			"n=1",
@@ -169,7 +193,7 @@
 		]
 	},
 	"input booleano": {
-		"prefix": "input booleano",
+		"prefix": "input bool",
 		"body": [
 			"# Interrogo l'utente",
 			"echo \"Domanda? [S/N]\"",
@@ -185,6 +209,32 @@
 			"*)",
 			    "# Risposta non valida",
 			    "echo \"Risposta non valida.\";;",
+			"esac"
+		]
+	},
+	"input numero": {
+		"prefix": "input int",
+		"body": [
+			"# Interrogo l'utente",
+			"echo \"Inserisci un numero compreso tra 1 e $N\"",
+			"# Leggo la risposta dell'utente",
+			"# Controllo se il parametro e' un numero intero",
+			"case \\$X in",
+			"*[!0-9]*)",
+				"\t# In tal caso il parametro non e' un numero intero, quindi interrompo l'esecuzione",
+				"\techo \"Il parametro $X non e' un numero intero. Processo interrotto.\"",
+				"\t# Esco specificando un valore intero di errore",
+				"\texit 9;;",
+			"*)",
+				"\techo \"Il parametro \\$X e' un numero intero.\"",
+				"\t# Controllo se il numero e' positivo",
+				"\tif test \"\\$X\" -le 0; then",
+					"\t\techo \"Il numero \\$X non e' positivo.\"",
+					"\t\t# Esco specificando un valore intero di errore",
+					"\t\texit 10",
+				"\telse",
+					"\t\techo \"Il numero \\$X e' positivo.\"",
+				"\tfi;;",
 			"esac"
 		]
 	},
@@ -205,12 +255,12 @@
 	"shift": {
 		"prefix": "shift",
 		"body": [
-			"# Shift per scorrere i parametri piu' agevolmente",
+			"# Shift per scorrere i parametri successivi piu' agevolmente",
 			"shift"
 		]
 	},
 	"estrazione linea da file": {
-		"prefix": "estrazione linea",
+		"prefix": "file getLine",
 		"body": [
 			"# Estraggo la riga desiderata dal file e la stampo a video",
 			"head -n \\$n \\$file | tail -n 1"
@@ -224,7 +274,7 @@
 		]
 	},
 	"ciclo per la ricorsione": {
-		"prefix": "recursive for",
+		"prefix": "for recursive",
 		"body": [
 			"# Cerco directory da esplorare all'interno della directory corrente",
 			"for D in *; do",
@@ -236,7 +286,7 @@
 		]
 	},
 	"ciclo di scorrimento delle gerarchie": {
-		"prefix": "scorrimento gerarchie",
+		"prefix": "for hierarchy",
 		"body": [
 			"# Scorro la lista di gerarchie",
 			"for G in \\$Q; do",
