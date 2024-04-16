@@ -201,7 +201,7 @@
 		"prefix": "input bool",
 		"body": [
 			"# Interrogo l'utente",
-			"echo \"Domanda? [S/N]\"",
+			"echo -n \"Domanda? [S/N]: \"",
 			"# Leggo la risposta dell'utente",
 			"read -r risposta",
 			"# Controllo la risposta dell'utente",
