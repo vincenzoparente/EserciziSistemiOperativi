@@ -3,12 +3,16 @@
 ## Descrittore di processo
 
 I singoli elementi della tabella dei processi sono delle strutture dati definite nel file `/usr/include/linux/sched.h`:
-\
-`extern struct task_struct *task[NR_TASKS];`
-\
-L'implementazione della struttura dati è la seguente (nel file `tasks.h`):
-\
+
 ```c
+extern struct task_struct *task[NR_TASKS];
+```
+
+L'implementazione della struttura dati è la seguente (nel file `tasks.h`):
+
+```c
+#define NR_TASKS 512
+
 struct task_struct {
     /* stato del processo */
     volatile long state;
@@ -26,7 +30,7 @@ struct task_struct {
     long counter;
 
     /* priorità statica */
-    long priority; 
+    long priority;
 
     /* maschera dei segnali ricevuti non ancora serviti */
     int sigpending;
