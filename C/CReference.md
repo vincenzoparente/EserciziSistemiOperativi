@@ -54,3 +54,26 @@ struct task_struct {
     /* ... */
 }
 ```
+
+## Fork
+
+Creazione di una fork:
+
+```c
+#include <unistd.h>
+
+pid_t pid = fork();
+```
+
+Per eseguire una fork nel modo corretto la procedura di norma è la seguente:
+
+```c
+if (fork() == 0) {
+    /* codice eseguito dal figlio */
+
+    /* il figlio termina con il valore da ritornare al padre */
+    exit(valore);
+}
+/* codice eseguito dal padre */
+exit(0);
+```
