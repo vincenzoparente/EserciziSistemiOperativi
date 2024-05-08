@@ -77,3 +77,159 @@ if (fork() == 0) {
 /* codice eseguito dal padre */
 exit(0);
 ```
+
+### Process identifier
+
+Ogni processo può conoscere il proprio PID mediante la primitiva `getpid()`:
+
+```c
+int pid;
+pid = getpid();
+```
+
+Inoltre, può conoscere il PID del padre (PPID) usando la primitiva `getppid()`:
+
+```c
+int ppid;
+ppid = getppid();
+```
+
+### User identifier e group identifier
+
+Altri attributi importanti di un processo sono UID e GID sia reali che effettivi. Essi si trovano nel descrittore del processo.
+\
+Ogni processo può conoscere i propri UID e GID usando rispettivamente le primitive `getuid()` e `getgid()`:
+
+```c
+/* UID reale */
+int uid;
+uid = getuid();
+/* UID effettivo */
+int euid;
+euid = geteuid();
+
+/* GID reale*/
+int gid;
+gid = getgid();
+/* GID effettivo */
+int egid;
+egid = getegid();
+```
+
+## Sospensione di processo
+
+Dopo la generazione di un processo figlio, il padre può decidere se operare contemporaneamente ad esso oppure se attentere il suo termine. Ciò è possibile utilizzando la primitiva `wait(&status)`. Essa sospsende l'esecuzione del processo padre in attesa della terminazione di uno dei processi figli:
+
+```c
+int status;
+int pid;
+pid = wait(&status);
+```
+
+Se un figlio raggiunge il suo termine, la variabile `status` è un valore a 16 bit, dove nel byte alto si ha il valore restituito dalla exit di un figlio, mentre nel byte basso 0.
+\
+Nel caso in cui, invece, un figlio termina in seguito alla ricezione di un segnale, allora `status` ha 0 nel byte alto, mentre nel byte basso il numero del segnale che ha fatto terminare il figlio.
+
+La primitiva `wait()` ritorna -1 se il processo invocante non ha figli da attendere, oppure il PID del figlio terminato. Chiaramente, se non c'è nessun figlio da aspettare, la `wait()` non ha effetto, quindi l'esecuzione del padre non viene sospesa.
+
+**Esempi di sincronizzazione tra padre e figlio**
+
+Caso 1:
+```c
+if ((pid = fork()) < 0)       /* fork fallita */
+    { printf("Errore in fork\n"); exit(1); }
+if (pid == 0) 
+    {   
+        /* codice eseguito dal figlio */
+        exit(valore);   /* il figlio termina con uno specifico
+        valore che verra' ritornato al padre */
+    }
+/* codice eseguito dal padre */
+pidfiglio = wait(&status);
+exit(0);    /* terminazione del padre */
+```
+
+Caso 2: se il valore restituito dalla exit non interessa:
+```c
+if ((pid = fork()) < 0)       /* fork fallita */
+    { printf("Errore in fork\n"); exit(1); }
+if (pid == 0) 
+    {   
+        /* codice eseguito dal figlio */
+        exit(valore);   /* il figlio termina con uno specifico
+        valore che verra' ritornato al padre */
+    }
+/* codice eseguito dal padre */
+pidfiglio = wait((int *) 0);    /* viene ignorato il valore di status */
+exit(0);    /* terminazione del padre */
+```
+
+*Attenzione*: è possibile ignorare il valore di ritorno della wait.
+
+In caso di generazione di più figli, di norma, si utilizza un ciclo for per aspettarli tutti oppure attenderne uno con uno specifico pid:
+
+```c
+while((rid = wait(&status) != pid));
+```
+
+In supporto vengono definite in `sys/wait.h` le seguenti macro:
+* `WIFEXITED(status)` e `WEXITSTATUS(status)`;
+* `WIFSIGNALED(status)` e `WTERMSIG(status)`.
+
+## Terminazione di un processo
+
+Un processo può terminare in due possibili modi:
+* **Involontario**: si verifica quando vengono eseguite *azioni non consentite* (es: riferimenti a indirizzi scorretti o tentativi di eseguire codice di operazioni non definite),*segnali generati dall'utente* (es: da tastiera o dal processo) oppure *segnali spediti da un altro processo* tramite la system call `kill`.
+* **Volontario**: si verifica per invocazione della `exit(status)` (vedi seguito) o perché si ha raggiunto la fine del codice.
+
+Per terminare un processo è buona pratica utilizzare `exit(status)`:
+
+```c
+int status;
+exit(status);
+```
+
+La primitiva `exit(status)` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait(status)`.
+
+**Convenzioni**:
+* Il valore 0 rappresenta il processo è terminato correttamente.
+* Un qualsiasi valore diverso da 0 sta a indicare che si è verificato un problema durante l'esecuzione del processo.
+
+*Esempio di utilizzo di `wait(status)` e `exit(status)`*:
+
+```c
+int main()
+{
+    if ((pid = fork()) < 0)
+        {
+            /* fork fallita */
+            printf("Errore in fork\n"); exit(1);
+        }
+    if (pid == 0) 
+        {
+            /* figlio */
+            printf("Esecuzione del figlio\n");
+            sleep(4);
+            exit(5);    /* valore di ritorno che dovrebbe essere scelto
+            in base al comportamento del codice eseguito dal figlio */
+        }
+    /* padre */
+    if (wait(&status) < 0) 
+        {
+            printf("Errore in wait\n");
+            exit(2);
+        }
+    if ((status & 0xFF) < 0) 
+        {
+            printf("Figlio terminato in modo anomalo\n");
+        }
+    else
+        {
+            ritorno = status >> 8;
+            /* selezione degli 8 bit più significativi */
+            ritorno &= 0xFF;
+            printf("Per il figlio %d lo stato di EXIT e' %d\n", pid, ritorno);
+        }
+    exit(0);
+}
+```
