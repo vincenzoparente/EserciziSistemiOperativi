@@ -138,14 +138,17 @@ La primitiva `wait(&status)` ritorna -1 se il processo invocante non ha figli da
 
 Caso 1:
 ```c
-if ((pid = fork()) < 0)       /* fork fallita */
-    { printf("Errore in fork\n"); exit(1); }
+if ((pid = fork()) < 0)       
+{ 
+    /* fork fallita */
+    printf("Errore in fork\n"); exit(1); 
+}
 if (pid == 0) 
-    {   
-        /* codice eseguito dal figlio */
-        exit(valore);   /* il figlio termina con uno specifico
-        valore che verra' ritornato al padre */
-    }
+{   
+    /* codice eseguito dal figlio */
+    exit(valore);   /* il figlio termina con uno specifico
+    valore che verra' ritornato al padre */
+}
 /* codice eseguito dal padre */
 pidfiglio = wait(&status);
 exit(0);    /* terminazione del padre */
@@ -153,14 +156,17 @@ exit(0);    /* terminazione del padre */
 
 Caso 2: se il valore restituito dalla exit non interessa:
 ```c
-if ((pid = fork()) < 0)       /* fork fallita */
-    { printf("Errore in fork\n"); exit(1); }
+if ((pid = fork()) < 0)       
+{ 
+    /* fork fallita */
+    printf("Errore in fork\n"); exit(1); 
+}
 if (pid == 0) 
-    {   
-        /* codice eseguito dal figlio */
-        exit(valore);   /* il figlio termina con uno specifico
-        valore che verra' ritornato al padre */
-    }
+{   
+    /* codice eseguito dal figlio */
+    exit(valore);   /* il figlio termina con uno specifico
+    valore che verra' ritornato al padre */
+}
 /* codice eseguito dal padre */
 pidfiglio = wait((int *) 0);    /* viene ignorato il valore di status */
 exit(0);    /* terminazione del padre */
@@ -203,35 +209,35 @@ La primitiva `exit(status)` chiude tutti i file aperti per il processo che termi
 int main()
 {
     if ((pid = fork()) < 0)
-        {
-            /* fork fallita */
-            printf("Errore in fork\n"); exit(1);
-        }
+    {
+        /* fork fallita */
+        printf("Errore in fork\n"); exit(1);
+    }
     if (pid == 0) 
-        {
-            /* figlio */
-            printf("Esecuzione del figlio\n");
-            sleep(4);
-            exit(5);    /* valore di ritorno che dovrebbe essere scelto
-            in base al comportamento del codice eseguito dal figlio */
-        }
+    {
+        /* figlio */
+        printf("Esecuzione del figlio\n");
+        sleep(4);
+        exit(5);    /* valore di ritorno che dovrebbe essere scelto
+        in base al comportamento del codice eseguito dal figlio */
+    }
     /* padre */
     if (wait(&status) < 0) 
-        {
-            printf("Errore in wait\n");
-            exit(2);
-        }
+    {
+        printf("Errore in wait\n");
+        exit(2);
+    }
     if ((status & 0xFF) < 0) 
-        {
-            printf("Figlio terminato in modo anomalo\n");
-        }
+    {
+        printf("Figlio terminato in modo anomalo\n");
+    }
     else
-        {
-            ritorno = status >> 8;
-            /* selezione degli 8 bit più significativi */
-            ritorno &= 0xFF;
-            printf("Per il figlio %d lo stato di EXIT e' %d\n", pid, ritorno);
-        }
+    {
+        ritorno = status >> 8;
+        /* selezione degli 8 bit più significativi */
+        ritorno &= 0xFF;
+        printf("Per il figlio %d lo stato di EXIT e' %d\n", pid, ritorno);
+    }
     exit(0);
 }
 ```
