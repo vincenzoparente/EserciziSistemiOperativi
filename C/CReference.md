@@ -126,13 +126,15 @@ int pid;
 pid = wait(&status);
 ```
 
+#### Status
+
 Se un figlio raggiunge il suo termine, la variabile `status` è un valore a 16 bit, dove nel byte alto si ha il valore restituito dalla exit di un figlio, mentre nel byte basso 0.
 \
 Nel caso in cui, invece, un figlio termina in seguito alla ricezione di un segnale, allora `status` ha 0 nel byte alto, mentre nel byte basso il numero del segnale che ha fatto terminare il figlio.
 
-La primitiva `wait()` ritorna -1 se il processo invocante non ha figli da attendere, oppure il PID del figlio terminato. Chiaramente, se non c'è nessun figlio da aspettare, la `wait()` non ha effetto, quindi l'esecuzione del padre non viene sospesa.
+La primitiva `wait(&status)` ritorna -1 se il processo invocante non ha figli da attendere, oppure il PID del figlio terminato. Chiaramente, se non c'è nessun figlio da aspettare, la `wait(&status)` non ha effetto, quindi l'esecuzione del padre non viene sospesa.
 
-**Esempi di sincronizzazione tra padre e figlio**
+#### Esempi di sincronizzazione tra padre e figlio
 
 Caso 1:
 ```c
@@ -189,13 +191,13 @@ int status;
 exit(status);
 ```
 
-La primitiva `exit(status)` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait(status)`.
+La primitiva `exit(status)` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait(&status)`.
 
 **Convenzioni**:
 * Il valore 0 rappresenta il processo è terminato correttamente.
 * Un qualsiasi valore diverso da 0 sta a indicare che si è verificato un problema durante l'esecuzione del processo.
 
-*Esempio di utilizzo di `wait(status)` e `exit(status)`*:
+*Esempio di utilizzo di `wait(&status)` e `exit(status)`*:
 
 ```c
 int main()
@@ -233,3 +235,21 @@ int main()
     exit(0);
 }
 ```
+
+*Osservazione*: combinando l'uso di `exit(status)` e `wait(&status)` si possono verificare due condizioni:
+* Il processo figlio termina **prima** che il padre abbia chiamato `wait(&status)`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait(&status)`.
+* Il processo padre termina prima dei suoi figli (inclusi gli zombie): tutti i processi figli vengono "adottati" dal processo Init. Quando un processo adottato da Init termina, esso non potrà mai diventare zombie perché Init rileva automaticamente il suo stato di terminazione.
+
+## Esecuzione di un programma
+
+Per eseguire un programma diverso da quello attualmente in esecuzione, ma rimanendo all'interno dello stesso processo, si utilizzano delle primitive della famiglia `exec`. Di seguito alcuni esempi:
+
+```c
+execv(pathname, argv);
+execl(pathname, arg0, argv1, ..., argvn, (char *) 0);
+execvp(name, arg0, argv1, ..., argvn, (char *) 0);
+```
+
+Chiaramente il nuovo programma deve essere un file eseguibile.
+\
+*Attenzione*: per convenzione il primo parametro deve essere sempre presente ed essere il nome del programma da eseguire.
