@@ -240,16 +240,184 @@ int main()
 * Il processo figlio termina **prima** che il padre abbia chiamato `wait(&status)`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait(&status)`.
 * Il processo padre termina prima dei suoi figli (inclusi gli zombie): tutti i processi figli vengono "adottati" dal processo Init. Quando un processo adottato da Init termina, esso non potrà mai diventare zombie perché Init rileva automaticamente il suo stato di terminazione.
 
-## Esecuzione di un programma
+## Exec
 
 Per eseguire un programma diverso da quello attualmente in esecuzione, ma rimanendo all'interno dello stesso processo, si utilizzano delle primitive della famiglia `exec`. Di seguito alcuni esempi:
 
 ```c
 execv(pathname, argv);
-execl(pathname, arg0, argv1, ..., argvn, (char *) 0);
-execvp(name, arg0, argv1, ..., argvn, (char *) 0);
+execl(pathname, argv0, argv1, ..., argvn, (char *)0);
+execvp(name, arvg0, argv1, ..., argvn, (char *)0);
 ```
 
 Chiaramente il nuovo programma deve essere un file eseguibile.
 \
 *Attenzione*: per convenzione il primo parametro deve essere sempre presente ed essere il nome del programma da eseguire.
+
+### Nomenclatura delle exec di uso più frequente
+
+Tutte le primitive di questa famiglia portano il nome `exec` seguito da alcune lettere che descrivono in che cosa ogni variante differisce dalle altre. Le più frequenti sono:
+* `l`: la primitiva riceve una lista di argomenti terminata da NULL, ovvero `(char *)0`;
+* `v`: la primitiva riceve un vettore di argomenti `argv[]`;
+* `p`: la primitiva prende un nome relativo semplice di file come argomento e lo cerca nelle directory specificate nella variabile d'ambiente `PATH`;
+* `e`: la primitiva riceve anche un vettore di `envp[]` che rimpiazza l'enviroment corrente.
+
+#### Esempi d'uso di exec
+
+`execv(pathname, argv)` (v = argomenti in vettore):
+
+```c
+int main()
+{
+    char *av[3];
+    av[0] = "ls";
+    av[1] = "-l";
+    av[2] = (char *)0;
+
+    printf("Esecuzione di ls\n");
+    execv("/bin/ls/", av);
+
+    printf("Errore in execv\n");
+    exit(1);
+}
+```
+
+`execl(pathname, argv0, ..., argvn, (char *)0)` (l = argomenti in lista):
+
+```c
+int main()
+{
+    printf("Esecuzione di ls\n");
+    execl("/bin/ls", "ls", "-l", (char *)0);
+
+    printf("Errore in execl\n");
+    exit(1);
+}
+```
+
+`execvp(name, argv)` (vp = argomenti in vettore e path):
+
+```c
+int main()
+{
+    char *argin[4];
+
+    argin[0] = "myecho";
+    argin[1] = "hello";
+    argin[2] = "world!";
+    argin[3] = (char *)0;
+
+    printf("Esecuzione di myecho\n");
+    execvp(argin[0], argin);
+
+    printf("Errore in execvp\n");
+    exit(1);
+}
+
+/* file myecho.c */
+int main(int argc, char **argv) 
+{
+    int i;
+    printf("Sono myecho\n");
+    for (i = 0; i < argc; i++) 
+    {
+        printf("Argomento argv[%d] = %s\n", i, argv[i]);
+    }
+}
+```
+
+*Nota*:
+\
+La differenza tra `execl` e `execv` e rispettivamente `execlp` e `execvp` sta nel fatto che nelle prime due il nome del programma da eseguire deve essere determinato (pathname), mentre nelle altre due esso è un nome relativo semplice e la ricerca del file eseguibile avviene secondo il valore della variabile d'ambiente `PATH` (significato della p nel nome della primitiva).
+\
+Un file comandi per una certa shell può essere eseguito solo usando le primitive `execlp` e `execvp`.
+
+Altre primitive della famiglia `exec`:
+
+```c
+execve(pathname, argv, envp);
+execle(pathname, argv0, argv1, ..., argvn, (char *)0, envp);
+```
+
+Queste due primitive sono simili rispettivamente a `execv` e `execl`, con l'unica differenza che possono specificare un ambiene diverso (`envp`).
+
+#### Esempio d'uso di `fork` ed `exec`
+
+```c
+int main()
+{
+    int pid;
+
+    pid = fork();
+    if (pid < 0)
+    {
+        /* fork fallita */
+        printf("Errore in fork\n");
+        exit(1);
+    }
+
+    if (pid == 0) 
+    {
+        /* figlio */
+        printf("Esecuzione di ls\n");
+        execl("/bin/ls", "ls", "-l", (char *)0);
+        printf("Errore in execl\n");
+        exit(-1);   /* valore che deve essere concordato con il padre */
+    }
+    /* padre */
+    wait((int *)0);
+    printf("Terminato ls\n");
+    exit(0);
+}
+```
+
+In questo caso la condivisione del codice tra padre e figlio termina subito dopo l'esecuzione di `execl` (assumendo che non avvengano errori) perché il processo figlio da quel momento esegue una copia del codice che, in questo caso, corrisponde a quello del comando `ls`. 
+
+Prima della `execl`:
+![before_exec](resources/before_exec.png)
+
+Dopo la `execl`:
+![after_exec](resources/after_exec.png)
+
+### Simulazione del comportamento di una shell
+
+```c
+int main(int argc, char **argv)
+{
+    int pid, pidfiglio, status, ritorno;
+    char st[80];
+
+    /* ciclo infinito */
+    for (;;)
+    {
+        printf("Inserire il comando da eseguire:\n");
+        scanf("%s", st); /* N.B. legge una singola stringa */
+        /* una volta ricevuto un comando si delega un figlio per eseguirlo */
+        if ((pid = fork()) < 0) 
+        {
+            perror("fork"); exit(1);
+        }
+        if (pid == 0)
+        {
+            /* FIGLIO: esegue i comandi */
+            execlp(st, st, (char *)0);
+            perror("Errore esecuzione comando");
+            exit(errno);
+        }
+        /* PADRE */
+        /* attesa figlio: esecuzione in foreground */
+        if (pidfiglio = wait(&status) < 0)
+        {
+            perror("Errore wait");
+            exit(errno);
+        }
+        else
+        {
+            /* verifica la eventuale terminazione annormale del figlio; nel caso in cui invece sia normale, allora recupero il valore ritornato e lo stampo */
+            printf("Eseguire altro comando? (si/no) \n");
+            scanf("%s", st);
+            if (strcmp(st, "si")) exit(0); /* uscita dal ciclo infinito */
+        }   /* fine else */
+    } /* fine for */
+}
+```
