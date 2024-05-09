@@ -380,9 +380,11 @@ int main()
 In questo caso la condivisione del codice tra padre e figlio termina subito dopo l'esecuzione di `execl` (assumendo che non avvengano errori) perché il processo figlio da quel momento esegue una copia del codice che, in questo caso, corrisponde a quello del comando `ls`. 
 
 Prima della `execl`:
+\
 ![before_exec](resources/before_exec.png)
 
 Dopo la `execl`:
+\
 ![after_exec](resources/after_exec.png)
 
 ### Simulazione del comportamento di una shell
