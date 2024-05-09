@@ -433,3 +433,15 @@ int main(int argc, char **argv)
 *Nota*: in caso di fallimento le system call ritornano tutte valore -1. Il loro valore di ritorno viene salvato sempre nella varibile globale `errno` definita nella libreria `errno.h` nella quale si trovano i codici di errore e le loro rispettive descrizioni.
 
 *Nota*: `perror()` è una funzione utilizzata nella gestione degli errori. Essa stampa su `stderr` una stringa definita dall'utente seguita dallla descrizione del `errno` avvenuto.
+
+## Pipe
+
+I processi possono interagire tramite l'uso della primitiva `pipe(piped)`:
+
+```c
+int piped[2];
+int retval;
+retval = pipe(piped);
+```
+
+`retval` vale 0 in caso di successo, altrimenti ritorna un valore negativo. In caso di successo vengono occupati due elementi liberi nella tabella dei file aperti del processo e i rispettivi file descriptor vengono memorizzati in `piped[0]` e `piped[1]`.
