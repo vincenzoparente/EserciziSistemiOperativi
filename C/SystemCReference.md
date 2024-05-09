@@ -486,3 +486,25 @@ int main()
 *Osservazione*: dovremmo abortire l'esecuzione di questo codice perché la `write()` si bloccherà quando avrà saturato la dimensione fissa della pipe dato che non ci sarà alcun processo che agisce come consumatore.
 
 La lunghezza di una pipe su Linux per esempio può essere (specialmente nelle macchine virtuali) 65536 byte (64 kB).
+
+### Comunicazione tra processi della stessa gerarchia tramite pipe
+
+```c
+int main()
+{
+    int pid, piped[2];
+    char msg[] = "ciao";
+    pipe(piped);    /* CREAZIONE PIPE: due elementi in piu' nella TFA del processo padre */
+    if (pid = fork() == 0)
+    {
+        /* figlio: eredita per copia la TFA del padre oltre alla copia dell'array pd */
+        write(piped[1], msg, 5);    /* figlio scrive sulla pipe */
+        exit(0);
+    }
+    /* padre: legge dalla pipe */
+    read(piped[0], msg, 5);
+    exit(0);
+}
+```
+
+*Nota*: per evitare problemi di deadlock la comunicazione tra padre e figlio deve essere sempre **unidirezionale**. Se il padre legge e il figlio scrive, allora dopo la creazione delle pipe il padre deve chiudere il lato di scrittura tramite `close()` e il figlio (dopo essere stato creato tramite `fork()`) deve chiudere il lato di lettura. Vale il ragiornamento duale nel caso in cui il padre scrive e il figlio legge.
