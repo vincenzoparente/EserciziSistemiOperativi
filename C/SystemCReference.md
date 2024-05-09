@@ -508,3 +508,10 @@ int main()
 ```
 
 *Nota*: per evitare problemi di deadlock la comunicazione tra padre e figlio deve essere sempre **unidirezionale**. Se il padre legge e il figlio scrive, allora dopo la creazione delle pipe il padre deve chiudere il lato di scrittura tramite `close()` e il figlio (dopo essere stato creato tramite `fork()`) deve chiudere il lato di lettura. Vale il ragiornamento duale nel caso in cui il padre scrive e il figlio legge.
+
+### Pipe rimane senza scrittore durante l'esecuzione
+
+Comportamento standard nel caso in cui il processo scrittore (figlio) venga terminato prima che la pipe venga chiusa dal processo lettore (padre):
+
+```c
+```
