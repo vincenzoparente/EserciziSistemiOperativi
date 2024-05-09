@@ -617,5 +617,63 @@ int main(int argc, char**argv)
         printf("Errore nel numero di parametri");
         exit(1);
     }
+    for (i = 1; i < argc && strcmp(argv[i], "!"); i++)
+    {
+        com1[i - 1] = argv[i];
+    }
+    com1[i - 1] = (char *)0; 
+    i++;
+    for (j = 1; i < argc; i++, j++)
+    {
+        com2[j - 1] = argv[i];
+    }
+    com2[j - 1] = (char *)0;    /* terminatore */
+
+    /* creazione del figlio per eseguire il comando in pipe */
+    if ((pid = fork()) < 0)
+    {
+        /* errore... */
+    }
+    if (pid == 0)
+    {
+        /* figlio = processo P2 */
+
+        /* il figlio P2 tratta il comando intero: crea la pipe */
+        if (pipe(piped) < 0)
+        {
+            exit(-1);
+        }
+        /* creazione di un nuovo figlio = processo P3 */
+        if ((pid = fork()) < 0)
+        {
+            exit(-1);
+        }
+        if (pid == 0)
+        {
+            /* processo P3 figlio di P2 figlio di P1 */
+            close(1);   /* l'output va messo sulla pipe, quindi posso chiudere stdout */
+            dup(piped[1]);  /* avendo chiuso con l'istruzione precedente stdout di indice 1, questa operazione di duplicazione del file descriptor di piped[1] trovera' sicuramente come prima posizione libera l'indice 1, quindi stdout e' effettivamente stato sostituito da una copia del file descriptor di piped[1] */
+            close(piped[0]);
+            close(piped[1]);    /* i lati pipe non servono piu' */
+            execvp(com1[0], com1);
+            exit(-1);   /* errore in caso si ritorni qui dopo la exec */
+        }
+        /* processo P2 (padre di P3) */
+        close(0);   /* posso chiudere stdin perche' l'input lo prendo dalla pipe */
+        dup(piped[0]);  /* vale lo stesso ragionamento che e' stato fatto in P3 riguardo piped[1] e stdout */
+        close(piped[0]);
+        close(piped[1]);
+        execvp(com2[0], com2);
+        exit(-1);   /* errore in caso si ritorni qui dopo la exec */
+    }
+    /* processo P1 padre di P2 */
+    if ((pidfiglio = wait(&status)) < 0)
+    {
+        /* errore */
+    }
+    /* recupero del valore di ritorno */
+    exit(ritorno);
 }
 ```
+
+![bef_aft_dup_and_close](resources/bef_aft_dup_and_close.png)
