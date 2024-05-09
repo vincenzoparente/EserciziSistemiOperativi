@@ -118,7 +118,7 @@ egid = getegid();
 
 ## Sospensione di processo
 
-Dopo la generazione di un processo figlio, il padre può decidere se operare contemporaneamente ad esso oppure se attentere il suo termine. Ciò è possibile utilizzando la primitiva `wait(&status)`. Essa sospsende l'esecuzione del processo padre in attesa della terminazione di uno dei processi figli:
+Dopo la generazione di un processo figlio, il padre può decidere se operare contemporaneamente ad esso oppure se attentere il suo termine. Ciò è possibile utilizzando la primitiva `wait()`. Essa sospsende l'esecuzione del processo padre in attesa della terminazione di uno dei processi figli:
 
 ```c
 int status;
@@ -132,7 +132,7 @@ Se un figlio raggiunge il suo termine, la variabile `status` è un valore a 16 b
 \
 Nel caso in cui, invece, un figlio termina in seguito alla ricezione di un segnale, allora `status` ha 0 nel byte alto, mentre nel byte basso il numero del segnale che ha fatto terminare il figlio.
 
-La primitiva `wait(&status)` ritorna -1 se il processo invocante non ha figli da attendere, oppure il PID del figlio terminato. Chiaramente, se non c'è nessun figlio da aspettare, la `wait(&status)` non ha effetto, quindi l'esecuzione del padre non viene sospesa.
+La primitiva `wait()` ritorna -1 se il processo invocante non ha figli da attendere, oppure il PID del figlio terminato. Chiaramente, se non c'è nessun figlio da aspettare, la `wait()` non ha effetto, quindi l'esecuzione del padre non viene sospesa.
 
 #### Esempi di sincronizzazione tra padre e figlio
 
@@ -188,22 +188,22 @@ In supporto vengono definite in `sys/wait.h` le seguenti macro:
 
 Un processo può terminare in due possibili modi:
 * **Involontario**: si verifica quando vengono eseguite *azioni non consentite* (es: riferimenti a indirizzi scorretti o tentativi di eseguire codice di operazioni non definite),*segnali generati dall'utente* (es: da tastiera o dal processo) oppure *segnali spediti da un altro processo* tramite la system call `kill`.
-* **Volontario**: si verifica per invocazione della `exit(status)` (vedi seguito) o perché si ha raggiunto la fine del codice.
+* **Volontario**: si verifica per invocazione della `exit()` (vedi seguito) o perché si ha raggiunto la fine del codice.
 
-Per terminare un processo è buona pratica utilizzare `exit(status)`:
+Per terminare un processo è buona pratica utilizzare `exit()`:
 
 ```c
 int status;
 exit(status);
 ```
 
-La primitiva `exit(status)` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait(&status)`.
+La primitiva `exit()` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait()`.
 
 **Convenzioni**:
 * Il valore 0 rappresenta il processo è terminato correttamente.
 * Un qualsiasi valore diverso da 0 sta a indicare che si è verificato un problema durante l'esecuzione del processo.
 
-*Esempio di utilizzo di `wait(&status)` e `exit(status)`*:
+*Esempio di utilizzo di `wait()` e `exit()`*:
 
 ```c
 int main()
@@ -242,8 +242,8 @@ int main()
 }
 ```
 
-*Osservazione*: combinando l'uso di `exit(status)` e `wait(&status)` si possono verificare due condizioni:
-* Il processo figlio termina **prima** che il padre abbia chiamato `wait(&status)`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait(&status)`.
+*Osservazione*: combinando l'uso di `exit()` e `wait()` si possono verificare due condizioni:
+* Il processo figlio termina **prima** che il padre abbia chiamato `wait()`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait()`.
 * Il processo padre termina prima dei suoi figli (inclusi gli zombie): tutti i processi figli vengono "adottati" dal processo Init. Quando un processo adottato da Init termina, esso non potrà mai diventare zombie perché Init rileva automaticamente il suo stato di terminazione.
 
 ## Exec
@@ -436,7 +436,7 @@ int main(int argc, char **argv)
 
 ## Pipe
 
-I processi possono interagire tramite l'uso della primitiva `pipe(piped)`:
+I processi possono interagire tramite l'uso della primitiva `pipe()`:
 
 ```c
 int piped[2];
@@ -514,4 +514,108 @@ int main()
 Comportamento standard nel caso in cui il processo scrittore (figlio) venga terminato prima che la pipe venga chiusa dal processo lettore (padre):
 
 ```c
+#include <stdio.h>
+
+int main(int argc, char **argv)
+{
+    /* ... */
+    if (pid == 0) 
+    {
+        /* figlio */
+        int fd;
+        close(piped[0]);    /* figlio chiude il lato lettura */
+        printf("Figlio %d sta per iniziare a scrivere...");
+        /* il figlio termina, dunque la pipe resta senza scrittore */
+        exit(0);
+    }
+    /* padre */
+    close(piped[1]);    /* padre chiude il lato scrittura */
+    while (read(piped[0], inpbuf, MSGSIZE))
+    {
+        if (j != 0)
+        {
+            /* operazioni da svolgere in caso il figlio abbia scritto qualcosa */
+        }
+        else
+        {
+            puts("Non c'e' alcun scrittore");
+            exit(4);
+        }
+    }
+}
+```
+
+**Importante**: la primitiva `read()` ritorna 0 se non ci sono dati da leggere e se non ci sono processi scrittori attivi. Ciò significa che se il processo figlio non scrive nulla, ma non ha ancora chiuso il suo lato di pipe, allora il ciclo continua.
+
+### Pipe rimane senza lettore durante l'esecuzione
+
+Comportamento standard nel caso in cui il processo lettore (padre) venga terminato prima che la pipe venga chiusa dal processo scrittore (figlio):
+
+```c
+#include <stdio.h>
+
+int main()
+{
+    /* ... */
+    if (pid == 0)
+    {
+        /* figlio */
+        int fd;
+        close(piped[0]);    /* figlio chiude il lato lettura */
+        /* ...apertura del file fd... */
+        printf("Figlio %d sta per iniziare a scrivere...");
+        while (read(fd, mess, MSGSIZE))
+        {
+            mess[MSGSIZE - 1] = '\0';
+            write(piped[1], mess, MSGSIZE);
+            j++;
+        }
+        printf("Figlio ha scritto %d messaggi sulla pipe\n", j);
+        exit(0);
+    }
+    /* padre */
+    close(piped[1]);    /* padre chiude il lato scrittura */
+    /* il padre termina, quindi il figlio resta senza lettore */
+    exit(0);
+}
+```
+
+Il sistema in tal caso spedisce il segnale `SIGPIPE` al processo scrittore per avvisarlo del fatto che non ci sono più processi lettori. Di default questo segnale provoca la terminazione del processo che lo riceve. Tale comportamento è necessario per evitare che la pipe si saturi e il processo scrittore proceda a scrivere fino a bloccarsi in un momento postumo indefinito.
+
+## Dup
+
+La primitiva `dup()` serve per duplicare un elemento della tabella dei file aperti di processo:
+
+```c
+int fd;     /* file descriptor del file da duplicare */
+int retval;
+retval = dup(fd);
+```
+
+L'effetto di questa primitiva è copiare l'elemento di indice `fd` della TFA del processo interessato nella prima posizione libera della stessa con l'indice minimo tra quelli disponibili.
+\
+`dup()` restituisce il nuovo file descriptor, ovvero il nuovo indice della TFA, oppure, in caso di fallimento, -1.
+
+Questa primitiva può essere usata in generale per copiare qualunque file descriptor, ma in particolare viene usata soprattutto per copiare i file descriptor di una pipe e realizzare quindi il piping di comandi.
+
+### Esempio di piping di comandi (semplificato)
+
+```c
+#include <stdio.h>
+
+int main(int argc, char**argv)
+{
+    int j, i;
+    char *com1[10], *com2[10];
+    int pid, piped[2];
+    int pidfiglio, status, ritorno;
+
+    /* processo P1: simulazione del processo shell */
+    /* si devono fornire nella linea comandi due comandi distinti, separati dal carattere '!'. Non si usa direttamente '|' perché la shell lo interpreta direttamente nel suo linguaggio */
+    if (argc < 4)   /* devono esserci almeno 3 stringhe */
+    {
+        printf("Errore nel numero di parametri");
+        exit(1);
+    }
+}
 ```
