@@ -444,4 +444,45 @@ int retval;
 retval = pipe(piped);
 ```
 
-`retval` vale 0 in caso di successo, altrimenti ritorna un valore negativo. In caso di successo vengono occupati due elementi liberi nella tabella dei file aperti del processo e i rispettivi file descriptor vengono memorizzati in `piped[0]` e `piped[1]`.
+`retval` vale 0 in caso di successo, altrimenti ritorna un valore negativo. In caso di successo vengono occupati due elementi liberi nella tabella dei file aperti del processo e i rispettivi file descriptor vengono memorizzati in `piped[0]` e `piped[1]` che rappresentano rispettivamente il lato di lettura e quello di scrittura sulla pipe. Per leggere e scrivere si usano le primitive `read()` e `write()`. Allo stesso modo può essere utilizzata la `close()` per chiudere uno dei lati della pipe.
+\
+In conclusione, ognuno dei due lati della pipe viene visto dal processo esattamente come un file.
+
+#### Differenze rispetto ai file
+
+* I file descriptor dei due lati della pipe non corrispondono ai nomi nel file system. Una pipe è una struttura che non permane alla terminazione dei processi.
+* La dimensione di una pipe è fissa: ad essa è associato un buffer.
+* Una pipe prevede la gestione fifo dei file bufferizzati.
+* Vi è un rapporto di sincronia del tipo produttore-consumatore. Un processo consumatore che legge da `piped[0]` si blocca se la pipe è vuota e attende che arrivino dei dati. Un processo produttore che scrive su `piped[1]` si blocca se la pipe è piena e attende che si liberi spazio.
+
+### Determinare la lunghezza di una pipe (esempio)
+
+```c
+#include <stdio.h>
+
+int count;
+
+int main()
+{
+    int piped[2];
+    char c = 'x';
+    if (pipe(piped) < 0)
+    {
+        printf("Errore\n");
+        exit(1);
+    }
+    for (count = 0;;)
+    {
+        write(piped[1], &c, 1); /* scrittura sulla pipe */
+        if ((++count % 1024) == 0)
+        {
+            printf("%d caratteri nella pipe\n", count);
+        }
+    }
+    exit(0);
+}
+```
+
+*Osservazione*: dovremmo abortire l'esecuzione di questo codice perché la `write()` si bloccherà quando avrà saturato la dimensione fissa della pipe dato che non ci sarà alcun processo che agisce come consumatore.
+
+La lunghezza di una pipe su Linux per esempio può essere (specialmente nelle macchine virtuali) 65536 byte (64 kB).
