@@ -55,6 +55,106 @@ struct task_struct {
 }
 ```
 
+## Tabella dei file aperti
+
+La struttura dati presente in un descrittore di processo contiene, in particolare, la tabella dei file aperti:
+
+```c
+struct files_struct {
+    /* Maschera di bit di tutti i file descriptor usati (fino a 256) */
+    fd_set open_fds;
+    /* Array di file descriptor */
+    struct file* fd[NR_OPEN];
+    /* ... */
+};
+```
+
+Dove `NR_OPEN` è definito nella libreria `fs.h`. In quest'ultima è definita anche la struttura `file`:
+
+```c
+struct file {
+    /* modalita' di accesso (read only, read + write, write only) */
+    mode_t f_mode;
+    /* file pointer all'interno del file (64 bit -> file > 2 GB) */
+    loff_t f_pos;
+    /* ulteriori flag di open */
+    unsigned short f_flags;
+    /* contatore di riferimenti */
+    unsigned short f_count;
+    /* puntatore alla copia degli i-node del file */
+    struct inode* f_inode;
+    /* ... */
+};
+```
+
+Ed è definita in `fs.h` anche la struttura `inode`:
+
+```c
+struct inode {
+    /* descrizione del dispositvo (partizioine) */
+    kdev_t i_dev;
+    /* numero dell'inode all'interno del dispositivo */
+    unsigned long i_ino;
+    /* diritti di accesso */
+    umode_t i_mode;
+    /* numero di hard link */
+    nlink_t i_nlink;
+    /* user id e group id del proprietario */
+    uid_t i_uid;
+    gid_t i_gid;
+    /* dimensione (in byte) */
+    off_t i_size;
+    /* tempo di ultimo accesso, modifica, modifica dell'i-node */
+    time_t i_atime;
+    time_t i_mtime;
+    time_t i_ctime;
+    /* ... */
+    /* informazioni per lo specifico file system */
+    union {
+        struct minix_inode_info minix_i;
+        struct ext_inode_info ext_i;
+        struct ext2_inode_info ext2_i;
+        struct hpfs_inode_info hpfs_i;
+        struct msdos_inode_indo msdos_i;
+        /* ... */
+    } u;
+    /* ... */
+};
+```
+
+Prendendo in esame il file system ext2, in `Ext2_fs.h` troviamo:
+
+```c
+/* numero di blocchi indirizzati direttamente */
+#define EXT2_NDIR_BLOCKS 12
+
+/* indici dei puntatori ai blocchi che contengono indirizzi dei blocchi indiretti */
+#define EXT2_IND_BLOCK EXT2_NDIR_BLOCKS
+#define EXT2_DIND_BLOCK (EXT2_IND_BLOCK + 1)
+#define EXT2_DIND_BLOCK (EXT2_DIND_BLOCK + 1)
+
+/* numero di elementi della tabella dei riferimenti ai blocchi */
+#define EXT2_N_BLOCKS (EXT2_TIND_BLOCK + 1)
+
+struct ext2_inode {
+    /* indirizzi dei blocchi */
+    __u32 i_block[EXT2_N_BLOCKS];
+    /* ... */
+};
+```
+
+Tabella degli i_block:
+| Posizione | Contenuto |
+|:---|:---|
+| 0 -> (EXT2_NDIR_BLOCKS - 1) | 12 riferimenti diretti |
+| EXT2_IND_BLOCK | Riferimento indiretto di primo livello |
+| EXT2_DIND_BLOCK | Riferimento indiretto di secondo livello |
+| EXT2_TIND_BLOCK | Riferimento indiretto di terzo livello |
+
+## Sync
+
+La primitiva `sync()` serve per effettuare un flush periodico (generalmente una volta ogni 30 secondi) di tutte le informazioni in memoria centrale sui dischi. Inoltre, questa operazione viene sempre eseguita quando si effettua lo shutdown di un sistema UNIX.
+
 ## Fork
 
 Creazione di una fork:
@@ -137,14 +237,15 @@ La primitiva `wait()` ritorna -1 se il processo invocante non ha figli da attend
 #### Esempi di sincronizzazione tra padre e figlio
 
 Caso 1:
+
 ```c
-if ((pid = fork()) < 0)       
-{ 
+if ((pid = fork()) < 0)
+{
     /* fork fallita */
-    printf("Errore in fork\n"); exit(1); 
+    printf("Errore in fork\n"); exit(1);
 }
-if (pid == 0) 
-{   
+if (pid == 0)
+{
     /* codice eseguito dal figlio */
     exit(valore);   /* il figlio termina con uno specifico
     valore che verra' ritornato al padre */
@@ -155,14 +256,15 @@ exit(0);    /* terminazione del padre */
 ```
 
 Caso 2: se il valore restituito dalla exit non interessa:
+
 ```c
-if ((pid = fork()) < 0)       
-{ 
+if ((pid = fork()) < 0)
+{
     /* fork fallita */
-    printf("Errore in fork\n"); exit(1); 
+    printf("Errore in fork\n"); exit(1);
 }
-if (pid == 0) 
-{   
+if (pid == 0)
+{
     /* codice eseguito dal figlio */
     exit(valore);   /* il figlio termina con uno specifico
     valore che verra' ritornato al padre */
@@ -172,7 +274,7 @@ pidfiglio = wait((int *) 0);    /* viene ignorato il valore di status */
 exit(0);    /* terminazione del padre */
 ```
 
-*Attenzione*: è possibile ignorare il valore di ritorno della wait.
+_Attenzione_: è possibile ignorare il valore di ritorno della wait.
 
 In caso di generazione di più figli, di norma, si utilizza un ciclo for per aspettarli tutti oppure attenderne uno con uno specifico pid:
 
@@ -181,14 +283,16 @@ while((rid = wait(&status) != pid));
 ```
 
 In supporto vengono definite in `sys/wait.h` le seguenti macro:
-* `WIFEXITED(status)` e `WEXITSTATUS(status)`;
-* `WIFSIGNALED(status)` e `WTERMSIG(status)`.
+
+- `WIFEXITED(status)` e `WEXITSTATUS(status)`;
+- `WIFSIGNALED(status)` e `WTERMSIG(status)`.
 
 ## Terminazione di un processo
 
 Un processo può terminare in due possibili modi:
-* **Involontario**: si verifica quando vengono eseguite *azioni non consentite* (es: riferimenti a indirizzi scorretti o tentativi di eseguire codice di operazioni non definite),*segnali generati dall'utente* (es: da tastiera o dal processo) oppure *segnali spediti da un altro processo* tramite la system call `kill`.
-* **Volontario**: si verifica per invocazione della `exit()` (vedi seguito) o perché si ha raggiunto la fine del codice.
+
+- **Involontario**: si verifica quando vengono eseguite _azioni non consentite_ (es: riferimenti a indirizzi scorretti o tentativi di eseguire codice di operazioni non definite),_segnali generati dall'utente_ (es: da tastiera o dal processo) oppure _segnali spediti da un altro processo_ tramite la system call `kill`.
+- **Volontario**: si verifica per invocazione della `exit()` (vedi seguito) o perché si ha raggiunto la fine del codice.
 
 Per terminare un processo è buona pratica utilizzare `exit()`:
 
@@ -200,10 +304,11 @@ exit(status);
 La primitiva `exit()` chiude tutti i file aperti per il processo che termina. Il valore del parametro `status` viene passato al processo padre nel caso in cui esso abbia invocato la primitiva `wait()`.
 
 **Convenzioni**:
-* Il valore 0 rappresenta il processo è terminato correttamente.
-* Un qualsiasi valore diverso da 0 sta a indicare che si è verificato un problema durante l'esecuzione del processo.
 
-*Esempio di utilizzo di `wait()` e `exit()`*:
+- Il valore 0 rappresenta il processo è terminato correttamente.
+- Un qualsiasi valore diverso da 0 sta a indicare che si è verificato un problema durante l'esecuzione del processo.
+
+_Esempio di utilizzo di `wait()` e `exit()`_:
 
 ```c
 int main()
@@ -213,7 +318,7 @@ int main()
         /* fork fallita */
         printf("Errore in fork\n"); exit(1);
     }
-    if (pid == 0) 
+    if (pid == 0)
     {
         /* figlio */
         printf("Esecuzione del figlio\n");
@@ -222,12 +327,12 @@ int main()
         in base al comportamento del codice eseguito dal figlio */
     }
     /* padre */
-    if (wait(&status) < 0) 
+    if (wait(&status) < 0)
     {
         printf("Errore in wait\n");
         exit(2);
     }
-    if ((status & 0xFF) < 0) 
+    if ((status & 0xFF) < 0)
     {
         printf("Figlio terminato in modo anomalo\n");
     }
@@ -242,9 +347,10 @@ int main()
 }
 ```
 
-*Osservazione*: combinando l'uso di `exit()` e `wait()` si possono verificare due condizioni:
-* Il processo figlio termina **prima** che il padre abbia chiamato `wait()`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait()`.
-* Il processo padre termina prima dei suoi figli (inclusi gli zombie): tutti i processi figli vengono "adottati" dal processo Init. Quando un processo adottato da Init termina, esso non potrà mai diventare zombie perché Init rileva automaticamente il suo stato di terminazione.
+_Osservazione_: combinando l'uso di `exit()` e `wait()` si possono verificare due condizioni:
+
+- Il processo figlio termina **prima** che il padre abbia chiamato `wait()`: il processo figlio viene messo in stato zombie, ovvero terminato, ma in attesa di consegnare il valore `status` al padre. Tale stato termina quando il padre chiama la `wait()`.
+- Il processo padre termina prima dei suoi figli (inclusi gli zombie): tutti i processi figli vengono "adottati" dal processo Init. Quando un processo adottato da Init termina, esso non potrà mai diventare zombie perché Init rileva automaticamente il suo stato di terminazione.
 
 ## Exec
 
@@ -258,15 +364,16 @@ execvp(name, arvg0, argv1, ..., argvn, (char *)0);
 
 Chiaramente il nuovo programma deve essere un file eseguibile.
 \
-*Attenzione*: per convenzione il primo parametro deve essere sempre presente ed essere il nome del programma da eseguire.
+_Attenzione_: per convenzione il primo parametro deve essere sempre presente ed essere il nome del programma da eseguire.
 
 ### Nomenclatura delle exec di uso più frequente
 
 Tutte le primitive di questa famiglia portano il nome `exec` seguito da alcune lettere che descrivono in che cosa ogni variante differisce dalle altre. Le più frequenti sono:
-* `l`: la primitiva riceve una lista di argomenti terminata da NULL, ovvero `(char *)0`;
-* `v`: la primitiva riceve un vettore di argomenti `argv[]`;
-* `p`: la primitiva prende un nome relativo semplice di file come argomento e lo cerca nelle directory specificate nella variabile d'ambiente `PATH`;
-* `e`: la primitiva riceve anche un vettore di `envp[]` che rimpiazza l'enviroment corrente.
+
+- `l`: la primitiva riceve una lista di argomenti terminata da NULL, ovvero `(char *)0`;
+- `v`: la primitiva riceve un vettore di argomenti `argv[]`;
+- `p`: la primitiva prende un nome relativo semplice di file come argomento e lo cerca nelle directory specificate nella variabile d'ambiente `PATH`;
+- `e`: la primitiva riceve anche un vettore di `envp[]` che rimpiazza l'enviroment corrente.
 
 #### Esempi d'uso di exec
 
@@ -321,18 +428,18 @@ int main()
 }
 
 /* file myecho.c */
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     int i;
     printf("Sono myecho\n");
-    for (i = 0; i < argc; i++) 
+    for (i = 0; i < argc; i++)
     {
         printf("Argomento argv[%d] = %s\n", i, argv[i]);
     }
 }
 ```
 
-*Nota*:
+_Nota_:
 \
 La differenza tra `execl` e `execv` e rispettivamente `execlp` e `execvp` sta nel fatto che nelle prime due il nome del programma da eseguire deve essere determinato (pathname), mentre nelle altre due esso è un nome relativo semplice e la ricerca del file eseguibile avviene secondo il valore della variabile d'ambiente `PATH` (significato della p nel nome della primitiva).
 \
@@ -362,7 +469,7 @@ int main()
         exit(1);
     }
 
-    if (pid == 0) 
+    if (pid == 0)
     {
         /* figlio */
         printf("Esecuzione di ls\n");
@@ -377,7 +484,7 @@ int main()
 }
 ```
 
-In questo caso la condivisione del codice tra padre e figlio termina subito dopo l'esecuzione di `execl` (assumendo che non avvengano errori) perché il processo figlio da quel momento esegue una copia del codice che, in questo caso, corrisponde a quello del comando `ls`. 
+In questo caso la condivisione del codice tra padre e figlio termina subito dopo l'esecuzione di `execl` (assumendo che non avvengano errori) perché il processo figlio da quel momento esegue una copia del codice che, in questo caso, corrisponde a quello del comando `ls`.
 
 Prima della `execl`:
 \
@@ -401,7 +508,7 @@ int main(int argc, char **argv)
         printf("Inserire il comando da eseguire:\n");
         scanf("%s", st); /* N.B. legge una singola stringa */
         /* una volta ricevuto un comando si delega un figlio per eseguirlo */
-        if ((pid = fork()) < 0) 
+        if ((pid = fork()) < 0)
         {
             perror("fork"); exit(1);
         }
@@ -430,9 +537,9 @@ int main(int argc, char **argv)
 }
 ```
 
-*Nota*: in caso di fallimento le system call ritornano tutte valore -1. Il loro valore di ritorno viene salvato sempre nella varibile globale `errno` definita nella libreria `errno.h` nella quale si trovano i codici di errore e le loro rispettive descrizioni.
+_Nota_: in caso di fallimento le system call ritornano tutte valore -1. Il loro valore di ritorno viene salvato sempre nella varibile globale `errno` definita nella libreria `errno.h` nella quale si trovano i codici di errore e le loro rispettive descrizioni.
 
-*Nota*: `perror()` è una funzione utilizzata nella gestione degli errori. Essa stampa su `stderr` una stringa definita dall'utente seguita dallla descrizione del `errno` avvenuto.
+_Nota_: `perror()` è una funzione utilizzata nella gestione degli errori. Essa stampa su `stderr` una stringa definita dall'utente seguita dallla descrizione del `errno` avvenuto.
 
 ## Pipe
 
@@ -450,10 +557,10 @@ In conclusione, ognuno dei due lati della pipe viene visto dal processo esattame
 
 #### Differenze rispetto ai file
 
-* I file descriptor dei due lati della pipe non corrispondono ai nomi nel file system. Una pipe è una struttura che non permane alla terminazione dei processi.
-* La dimensione di una pipe è fissa: ad essa è associato un buffer.
-* Una pipe prevede la gestione fifo dei file bufferizzati.
-* Vi è un rapporto di sincronia del tipo produttore-consumatore. Un processo consumatore che legge da `piped[0]` si blocca se la pipe è vuota e attende che arrivino dei dati. Un processo produttore che scrive su `piped[1]` si blocca se la pipe è piena e attende che si liberi spazio.
+- I file descriptor dei due lati della pipe non corrispondono ai nomi nel file system. Una pipe è una struttura che non permane alla terminazione dei processi.
+- La dimensione di una pipe è fissa: ad essa è associato un buffer.
+- Una pipe prevede la gestione fifo dei file bufferizzati.
+- Vi è un rapporto di sincronia del tipo produttore-consumatore. Un processo consumatore che legge da `piped[0]` si blocca se la pipe è vuota e attende che arrivino dei dati. Un processo produttore che scrive su `piped[1]` si blocca se la pipe è piena e attende che si liberi spazio.
 
 ### Determinare la lunghezza di una pipe (esempio)
 
@@ -483,7 +590,7 @@ int main()
 }
 ```
 
-*Osservazione*: dovremmo abortire l'esecuzione di questo codice perché la `write()` si bloccherà quando avrà saturato la dimensione fissa della pipe dato che non ci sarà alcun processo che agisce come consumatore.
+_Osservazione_: dovremmo abortire l'esecuzione di questo codice perché la `write()` si bloccherà quando avrà saturato la dimensione fissa della pipe dato che non ci sarà alcun processo che agisce come consumatore.
 
 La lunghezza di una pipe su Linux per esempio può essere (specialmente nelle macchine virtuali) 65536 byte (64 kB).
 
@@ -507,7 +614,7 @@ int main()
 }
 ```
 
-*Nota*: per evitare problemi di deadlock la comunicazione tra padre e figlio deve essere sempre **unidirezionale**. Se il padre legge e il figlio scrive, allora dopo la creazione delle pipe il padre deve chiudere il lato di scrittura tramite `close()` e il figlio (dopo essere stato creato tramite `fork()`) deve chiudere il lato di lettura. Vale il ragiornamento duale nel caso in cui il padre scrive e il figlio legge.
+_Nota_: per evitare problemi di deadlock la comunicazione tra padre e figlio deve essere sempre **unidirezionale**. Se il padre legge e il figlio scrive, allora dopo la creazione delle pipe il padre deve chiudere il lato di scrittura tramite `close()` e il figlio (dopo essere stato creato tramite `fork()`) deve chiudere il lato di lettura. Vale il ragiornamento duale nel caso in cui il padre scrive e il figlio legge.
 
 ### Pipe rimane senza scrittore durante l'esecuzione
 
@@ -519,7 +626,7 @@ Comportamento standard nel caso in cui il processo scrittore (figlio) venga term
 int main(int argc, char **argv)
 {
     /* ... */
-    if (pid == 0) 
+    if (pid == 0)
     {
         /* figlio */
         int fd;
@@ -621,7 +728,7 @@ int main(int argc, char**argv)
     {
         com1[i - 1] = argv[i];
     }
-    com1[i - 1] = (char *)0; 
+    com1[i - 1] = (char *)0;
     i++;
     for (j = 1; i < argc; i++, j++)
     {
