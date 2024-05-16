@@ -1,0 +1,11 @@
+{
+	"make: basic": {
+		"prefix": "make: basic",
+		"body": [
+			"all: main",
+			"",
+			"main: $0",
+			"\tgcc -Wall -std=c11 -o $1"
+		]
+	}
+}
