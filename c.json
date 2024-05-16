@@ -134,7 +134,7 @@
             "\t/* Aspetto il figlio */",
             "\tif ((pid = wait(&status)) < 0)",
             "\t{",
-            "\t\tprintf(\"Errore nella wait del figlio.\\n\");",
+            "\t\tprintf(\"Errore del padre in wait.\\n\");",
             "\t\texit(8);",
             "\t}",
             "\tif ((status & 0xFF) != 0)",
