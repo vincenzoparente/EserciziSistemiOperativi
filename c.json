@@ -10,7 +10,7 @@
             "#include <sys/wait.h>",
             "#include <sys/stat.h>",
             "",
-            ""
+            "$0"
         ]
     },
     "t-main": {
@@ -18,7 +18,7 @@
         "body": [
             "int main(int argc, char** argv)",
             "{",
-            "\t$0",
+            "\t$1",
             "\t",
             "\texit(0);",
             "}"
@@ -27,61 +27,66 @@
     "t-comment": {
         "prefix": "t-comment",
         "body": [
-            "/* $0 */"
+            "/* $1 */"
         ]
     },
-    "variables: local variables": {
+    "t-variables: local variables": {
         "prefix": "t-variables: local variables",
         "body": [
             "/* ------------- Variabili locali ------------- */",
             "",
             "int pid;               /* process identifier per le fork() */",
-            "int N;                 /* numero di file passati sulla riga di comando */",
-            "                       /* indici per i cicli */", 
+            "int ${1:N};            /* numero di file passati sulla riga di comando */",
+            "int $2;                /* indici per i cicli */", 
+            "pipe_t ${3:*piped}     /* ${4:array dinamico di pipe descriptors} */$5",
             "int status;            /* variabile di stato per la wait */",
             "int ritorno;           /* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */",
             "",
             "/* -------------------------------------------- */",
             "",
-            ""
+            "$0"
         ]
     },
     "t-control: parameters": {
         "prefix": "t-control: parameters",
         "body": [
-            "\tif (argc < 3)",
+            "\tif (argc ${1:<} ${2:n})",
             "\t{",
-            "\t\tprintf(\"Numero di parametri errato: argc = %d, ma dovrebbe essere >= 3\\n\", argc)",
+            "\t\tprintf(\"Numero di parametri errato: argc = %d, ma dovrebbe essere >= ${3:n}\\n\", argc)",
             "\t\texit(1)",
             "\t}",
             "\t",
-            "\t/*  */",
-            "\tN = argc - 1;"
+            "\t/* Numero di parametri passati da linea di comando */",
+            "\t${4:N} = argc - 1;",
+            "\t",
+            "\t$0"
         ]
     },
     "t-pipe: pipe_t": {
         "prefix": "t-pipe: pipe_t",
         "body": [
-            "typedef int pipe_t[2];"
+            "typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */"
         ]
     },
     "t-pipe: normal": {
         "prefix": "t-pipe: normal",
         "body": [
-            "\t/* Creo una pipe per consentire la comunicazione padre-figlio verificando se l'operazione va a buon fine */",
-            "\tif ((pipe(piped)) < 0)",
+            "\t/* Creo una pipe per consentire la comunicazione ${1:padre}-${2:figlio} verificando se l'operazione va a buon fine */",
+            "\tif ((pipe(${3:piped)}) < 0)",
             "\t{",
-            "\t\t/* La creazione ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
+            "\t\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\t\tprintf(\"Errore nel piping.\\n\");",
             "\t\texit(3);",
-            "\t}"
+            "\t}",
+            "\t",
+            "\t$0"
         ]
     },
     "t-pipe: vector": {
         "prefix": "t-pipe: vector",
         "body": [
             "\t/* Allocazione dell'array di pipe */",
-            "\tpiped = (pipe_t*) malloc(N * sizeof(pipe_t));",
+            "\tpiped = (pipe_t*)malloc(${1:N} * sizeof(pipe_t));",
             "\t/* Controllo che l'allocazione di memoria sia andaata a buon fine */",
             "\tif (piped == NULL)",
             "\t{",
@@ -90,8 +95,8 @@
             "\t\texit(2);",
             "\t}",
             "\t",
-            "\t/* Creazione delle N pipe */",
-            "\tfor (i = 0; i < N; i++)",
+            "\t/* Creazione delle ${2:N} pipe */",
+            "\tfor (i = 0; i < ${3:N}; i++)",
             "\t{",
             "\t\t/* Controllo che ogni creazione vada a buon fine */",
             "\t\tif (pipe(piped[i]) < 0)",
@@ -100,13 +105,20 @@
             "\t\t\tprintf(\"Errore nel piping.\\n\");",
             "\t\t\texit(3);",
             "\t\t}",
-            "\t}"
+            "\t}",
+            "\t",
+            "\tfor (i = 0; i < ${4:N}; i++)",
+            "\t{",
+            "\t\t${include:t-fork}",
+            "\t}",
+            "\t",
+            "\t$0"
         ]
     },
     "t-fork": {
         "prefix": "t-fork",
         "body": [
-            "\t/* Genero un processo figlio */",
+            "\t/* Genero un processo ${1:figlio} */",
             "\t/* Controllo che la fork() abbia successo */",
             "\tif ((pid = fork()) < 0)",
             "\t{",
@@ -115,42 +127,42 @@
             "\t\texit(4);",
             "\t}",
             "\t",
-            "\t/* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del figlio */",
+            "\t/* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del ${2:figlio} */",
             "\tif (pid == 0)",
             "\t{",
-            "\t\t/* Codice del figlio */",
-            "\t\tprintf(\"DEBUG-Esecuzione del processo figlio %d\\n\", getpid());",
+            "\t\t/* Codice del ${3:figlio} */",
+            "\t\tprintf(\"DEBUG-Esecuzione del processo ${4:figlio} %d\\n\", getpid());",
             "\t\t",
             "\t\t$0",
             "\t}",
             "\t",
-            "\t/* Codice del padre */",
+            "\t/* Codice del ${5:padre} */",
             "\t"
         ]
     },
     "t-wait": {
         "prefix": "t-wait",
         "body": [
-            "\t/* Aspetto il figlio */",
+            "\t/* Aspetto il ${1:figlio} */",
             "\tif ((pid = wait(&status)) < 0)",
             "\t{",
-            "\t\tprintf(\"Errore del padre in wait.\\n\");",
+            "\t\tprintf(\"Errore del ${2:padre} in wait.\\n\");",
             "\t\texit(8);",
             "\t}",
             "\tif ((status & 0xFF) != 0)",
             "\t{",
-            "\t\tprintf(\"Processo figlio %d terminato in modo anomalo.\\n\", pid);",
+            "\t\tprintf(\"Processo ${3:figlio} %d terminato in modo anomalo.\\n\", pid);",
             "\t}",
     		"\telse",
 		    "\t{",
             "\t\tritorno = (int)((status >> 8) & 0xFF);",
 		    "\t\tif (ritorno != 0)",
             "\t\t{",
-            "\t\t\tprintf(\"Il processo figlio %d e' incorso in un errore ed ha ritornato il valore %d.\\n\", pid, ritorno);",
+            "\t\t\tprintf(\"Il processo ${4:figlio} %d e' incorso in un errore ed ha ritornato il valore %d.\\n\", pid, ritorno);",
             "\t\t}",
 		    "\t\telse",
             "\t\t{",
-            "\t\t\tprintf(\"Il processo figlio %d ha ritornato %d.\\n\", pid, ritorno);",
+            "\t\t\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", pid, ritorno);",
             "\t\t}",	
 		    "\t}"
         ]

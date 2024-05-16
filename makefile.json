@@ -4,8 +4,8 @@
 		"body": [
 			"all: main",
 			"",
-			"main: $0",
-			"\tgcc -Wall -std=c11 -o $1"
+			"main: $1",
+			"\tgcc -Wall -std=c11 -o $2 $3"
 		]
 	}
 }

@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 typedef int pipe_t[2];      /* definizione del TIPO pipe_t come array di 2 interi */
 
@@ -59,7 +61,7 @@ int main(int argc, char** argv)
 
         if (pid == 0)
         {
-            /* Codice del figlio */
+            /* Codice del FIGLIO */
             printf("DEBUG-Sono il processo figlio di indice %d e pid %d sto per creare il nipote che contera' le linee del file %s\n", i, getpid(), argv[i+1]);
 
             /* Chiusura di tutte le pipe non utilizzate nella comunicazione con il padre */
@@ -91,7 +93,7 @@ int main(int argc, char** argv)
 
             if (pid == 0)
             {
-                /* Codice del nipote */
+                /* Codice del NIPOTE */
                 /* Ridirigo lo standard output su pipednipote[1] */
                 close(1);
                 dup(pipednipote[1]);
@@ -122,6 +124,11 @@ int main(int argc, char** argv)
             /* Chiudo il lato della pipe non utilizzato */
             close(pipednipote[1]);
 
+            /* Leggo dalla pipednipote il valore di ritorno di wc -l */
+            read(pipednipote[0], &lunghezza, sizeof(lunghezza));
+            /* Scrivo il valore su piped[i][1] per comunicarlo al padre */
+            write(piped[i][1], &lunghezza, sizeof(lunghezza));
+
             /* Aspetto il nipote per assicurarmi di avere qualcosa da leggere dalla pipednipote */
             if ((pid = wait(&status)) < 0)
             {
@@ -144,11 +151,6 @@ int main(int argc, char** argv)
                     printf("Il nipote con pid = %d ha ritornato %d\n", pid, ritorno);
                 }  	
 		    }
-            
-            /* Leggo dalla pipednipote il valore di ritorno di wc -l */
-            read(pipednipote[0], &lunghezza, sizeof(lunghezza));
-            /* Scrivo il valore su piped[i][1] per comunicarlo al padre */
-            write(piped[i][1], &lunghezza, sizeof(lunghezza));
         }
     }
 
@@ -158,6 +160,17 @@ int main(int argc, char** argv)
     {
         close(piped[j][1]);
     }
+
+    /* Raccolgo le informazioni dai figli in ordine di indice */
+    for (int i = 0; i < N; i++)
+    {
+        /* Leggo dalla piped[0] il valore scritto dal figlio */
+        read(piped[i][0], &lunghezza, sizeof(lunghezza));
+        /* Stampo su stdout la lunghezza del file corrispondente */
+        printf("Il file %s ha lunghezza pari a %d righe.\n", argv[i + 1], lunghezza);
+    }
+    
+
     /* Aspetto tutti i figli */
     for (i = 0; i < N; i++)
     {
@@ -180,8 +193,6 @@ int main(int argc, char** argv)
 	      	else
             {
                 printf("Il figlio con pid = %d ha ritornato %d\n", pid, ritorno);
-                /* Leggo dalla piped[0] il valore scritto dal figlio */
-                read(piped[i][0], &lunghezza, sizeof(lunghezza));
             }  	
 	    }
     }
