@@ -139,7 +139,7 @@
             "\t}",
             "\tif ((status & 0xFF) != 0)",
             "\t{",
-            "\t\tprintf(\"Nipote con pid %d terminato in modo anomalo\\n\", pid);",
+            "\t\tprintf(\"Processo figlio %d terminato in modo anomalo.\\n\", pid);",
             "\t}",
     		"\telse",
 		    "\t{",
@@ -150,7 +150,7 @@
             "\t\t}",
 		    "\t\telse",
             "\t\t{",
-            "\t\t\tprintf(\"Il processo figlio %d ha ritornato %d\\n\", pid, ritorno);",
+            "\t\t\tprintf(\"Il processo figlio %d ha ritornato %d.\\n\", pid, ritorno);",
             "\t\t}",	
 		    "\t}"
         ]
