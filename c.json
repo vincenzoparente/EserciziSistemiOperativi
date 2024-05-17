@@ -177,14 +177,7 @@
     		"else",
 		    "{",
             "\tritorno = (int)((status >> 8) & 0xFF);",
-		    "\tif (ritorno != 0)",
-            "\t{",
-            "\t\tprintf(\"Il processo ${4:figlio} %d e' incorso in un errore ed ha ritornato il valore %d.\\n\", pid, ritorno);",
-            "\t}",
-		    "\telse",
-            "\t{",
-            "\t\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", pid, ritorno);",
-            "\t}",	
+            "\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", pid, ritorno);",
 		    "}"
         ]
     },
