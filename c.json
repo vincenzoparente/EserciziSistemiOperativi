@@ -189,20 +189,22 @@
         "prefix": "t-wait",
         "body": [
             "/* Aspetto il ${1:figlio} */",
-            "if ((pid = wait(&status)) < 0)",
+            "if ((${2:pidFiglio} = wait(&status)) < 0)",
             "{",
-            "\tprintf(\"Errore del ${2:padre} in wait.\\n\");",
+            "\tprintf(\"Errore del ${3:padre} in wait.\\n\");",
             "\texit(8);",
             "}",
             "if ((status & 0xFF) != 0)",
             "{",
-            "\tprintf(\"Processo ${3:figlio} %d terminato in modo anomalo.\\n\", pid);",
+            "\tprintf(\"Processo ${4:figlio} %d terminato in modo anomalo.\\n\", pid);",
             "}",
     		"else",
 		    "{",
             "\tritorno = (int)((status >> 8) & 0xFF);",
-            "\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", pid, ritorno);",
-		    "}"
+            "\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", ${6:pid}, ritorno);",
+		    "}",
+            "",
+            "$0"
         ]
     },
     "t-shell": {
