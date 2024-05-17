@@ -134,24 +134,12 @@ int main(int argc, char** argv)
             close(pipednipote[1]);
 
             /* Devo leggere dalla pipe un carattere alla volta */
-            j = 0;
-            while (read(pipednipote[0], &(numero[j]), 1))
+            for (j = 0; read(pipednipote[0], &(numero[j]), 1) > 0; j++)
             {
-                j++;
-            }
-
-            /* Nel caso in cui il figlio abbia letto qualcosa */
-            if (j != 0)
-            {   
-                /* Sostituisco il carattere newline con un terminatore di stringa */
-                numero[j - 1] = '\0';
-                /* Converto l'array di char in un numero intero */
-                valore = atoi(numero);
-            }
-            else 
-            {
-                /* Se non ho letto nulla, considero che il file sia vuoto */
-                valore = 0;
+                if (numero[j] != '\n')
+                {
+                    valore = valore * 10 + atoi(&(numero[j]));
+                }
             }
 
             /* Scrivo il valore su piped[i][1] per comunicarlo al padre */
