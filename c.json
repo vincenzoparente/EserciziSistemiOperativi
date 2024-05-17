@@ -9,6 +9,7 @@
             "#include <fcntl.h>",
             "#include <sys/wait.h>",
             "#include <sys/stat.h>",
+            "#include <ctype.h>",
             "",
             "$0"
         ]
@@ -75,7 +76,7 @@
         "prefix": "t-pipe: normal",
         "body": [
             "/* Creo una pipe per consentire la comunicazione ${1:padre}-${2:figlio} verificando se l'operazione va a buon fine */",
-            "if ((pipe(${3:piped)}) < 0)",
+            "if ((pipe(${3:piped})) < 0)",
             "{",
             "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\tprintf(\"Errore nel piping.\\n\");",
@@ -128,12 +129,28 @@
             "\t\t/* Codice del ${9:figlio} */",
             "\t\tprintf(\"DEBUG-Esecuzione del processo ${10:figlio} %d\\n\", getpid());",
             "\t\t",
-            "\t\t$12",
+            "\t\t/* Chiudo i lati di pipe non utilizzati dal ${12:figlio} */",
+            "\t\tfor (j = 0; j < ${13:N}; j++)",
+            "\t\t{",
+            "\t\t\tclose(piped[i][0]);",
+            "\t\t\tif (i != j)",
+            "\t\t\t{",
+            "\t\t\t\tclose(piped[i][1]);",
+            "\t\t\t}",
+            "\t\t}",
+            "\t\t",
+            "\t\t$0",
             "\t}",
             "}",
             "",
             "/* Codice del ${11:padre} */",
-            "$0"
+            "/* Chiudo il lato di pipe non usato dal ${14:padre} */",
+            "for (i = 0; i < ${15:N}; i++)",
+            "{",
+            "\tclose(piped[i][1]);",
+            "}",
+            "",
+            ""
         ]
     },
     "t-fork": {
@@ -154,11 +171,18 @@
             "\t/* Codice del ${3:figlio} */",
             "\tprintf(\"DEBUG-Esecuzione del processo ${4:figlio} %d\\n\", getpid());",
             "\t",
-            "\t$6",
+            "\t/* Chiusura del lato di pipe non utilizzato dal ${6:figlio} */",
+            "\tclose(${7:piped[0]});",
+            "\t",
+            "\t$0",
             "}",
             "",
             "/* Codice del ${5:padre} */",
-            "$0"
+            "",
+            "/* Chiusura del lato di pipe non utilizzato dal ${8:padre} */",
+            "close(${9:piped[1]})",
+            "",
+            ""
         ]
     },
     "t-wait": {

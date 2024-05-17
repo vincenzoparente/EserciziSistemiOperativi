@@ -286,7 +286,7 @@ $ > file        # (viene ridirezionata una stringa vuota "" nel file)
 $ sort          # versione comando-filtro
 $ sort file     # versione comando
     # options:
-    -f          # (fold) Le lettere maiuscole sono comprese nell'ordinamento
+    -f          # (fold) le maiuscole non vengono differenziate dalle minuscole durante l'ordinamento
     -r          # (reverse) l'ordine alfabetico è invertito
     -c          # (check) il comando si ferma alla prima parola fuori ordine trovata e
                 # il suo ouput viene stampato su stderr
