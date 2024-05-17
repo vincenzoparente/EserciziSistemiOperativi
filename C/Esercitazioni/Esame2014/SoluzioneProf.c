@@ -95,10 +95,8 @@ int main(int argc, char **argv)
 			{
 				/* codice del nipote */
 				printf("DEBUG-Processo nipote %d di indice %d. File associato: %s\n", getpid(), i, argv[i+1]);
-				
 				/* chiusura della pipe rimasta aperta di comunicazione fra figlio-padre che il nipote non usa */
 				close(piped[i][1]);
-				
 				/* Ridirezione dello standard input: il file si trova usando l'indice i incrementato di 1 (cioe' per il primo processo i=0 il file e' argv[1])i; NOTA BENE: IN QUESTO CASO LA RIDIREZIONE ERA OBBLIGATORIA (anche se il testo parlava di comando) PER AVERE SULLO STANDARD OUTPUT SOLO LA STRINGA CORRISPONDENTE AL NUMERO! */
 				close(0);
 				if (open(argv[i+1], O_RDONLY) < 0)
