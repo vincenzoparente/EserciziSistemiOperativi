@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         }
     }
 
-    /* Ciclo di generazione dei figli */
+    /* Ciclo di generazione dei FIGLI */
     for (i = 0; i < N; i++)
     {
         if ((pid = fork()) < 0)
