@@ -68,15 +68,19 @@ int main(int argc, char **argv)
 			/* codice del figlio */
             /* in caso di errore nel figlio o nel nipote, decidiamo di tornare -1 che verra' interpretato dal padre come 255 e quindi un valore non ammissibile! */
 			printf("DEBUG-Processo filgio %d di indice %d. File associato: %s\n", getpid(), i, argv[i+1]);
+			
 			/* Chiusura delle pipe non usate nella comunicazione con il padre  */
 			for (j=0; j < N; j++)
 			{
 				close(piped[j][0]);
-				if (i != j) close(piped[j][1]);
+				if (i != j) 
+				{
+					close(piped[j][1]);
+				}
 			}
 
 			/* per prima cosa, creiamo la pipe di comunicazione fra nipote e figlio */
-		  	if(pipe(p) < 0)
+		  	if (pipe(p) < 0)
             {	
                 printf("Errore nella creazione della pipe\n");
                 exit(-1); /* si veda commento precedente */
@@ -90,9 +94,11 @@ int main(int argc, char **argv)
 			if (pid == 0) 
 			{
 				/* codice del nipote */
-				printf("DEBUG-Processo nipote del figlio %d di indice %d. File associato: %s\n", getpid(), i, argv[i+1]);
+				printf("DEBUG-Processo nipote %d di indice %d. File associato: %s\n", getpid(), i, argv[i+1]);
+				
 				/* chiusura della pipe rimasta aperta di comunicazione fra figlio-padre che il nipote non usa */
 				close(piped[i][1]);
+				
 				/* Ridirezione dello standard input: il file si trova usando l'indice i incrementato di 1 (cioe' per il primo processo i=0 il file e' argv[1])i; NOTA BENE: IN QUESTO CASO LA RIDIREZIONE ERA OBBLIGATORIA (anche se il testo parlava di comando) PER AVERE SULLO STANDARD OUTPUT SOLO LA STRINGA CORRISPONDENTE AL NUMERO! */
 				close(0);
 				if (open(argv[i+1], O_RDONLY) < 0)

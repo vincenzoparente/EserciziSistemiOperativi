@@ -15,8 +15,11 @@ int main(int argc, char** argv)
     int pid;                /* process identifier per le fork() */
     int N;                  /* numero di file passati sulla riga di comando, che corrispondera' al numero di figli */
     pipe_t* piped;          /* array dinamico di pipe descriptors per comunicazioni figli-padre  */
+    pipe_t pipednipote;     /* pipe per la comunicazione tra figlio e nipote */
     int i, j;               /* indici per i cicli */
-    int lunghezza;          /* variabile che viene comunicata da ogni figlio al padre */
+    char numero[11];        /* variabile che contiene il numero di righe letto in caratteri */
+    int valore;             /* variabile che contiene il numero di righe in forma numerica */
+    long int somma;         /* variabile che contiene la somma di tutti i valori letti */
     int status;			    /* variabile di stato per la wait */
     int ritorno;            /* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
 
@@ -62,7 +65,7 @@ int main(int argc, char** argv)
         if (pid == 0)
         {
             /* Codice del FIGLIO */
-            printf("DEBUG-Sono il processo figlio di indice %d e pid %d sto per creare il nipote che contera' le linee del file %s\n", i, getpid(), argv[i+1]);
+            printf("DEBUG-Processo filgio %d di indice %d. File associato: %s\n", getpid(), i, argv[i+1]);
 
             /* Chiusura di tutte le pipe non utilizzate nella comunicazione con il padre */
             for (j = 0; j < N; j++)
@@ -76,41 +79,46 @@ int main(int argc, char** argv)
                 }
             }
 
-            /* Apro una pipe per la comunicazione con il nipote */
-            pipe_t pipednipote;
+            /* Creo una pipe per la comunicazione con il nipote */
             if (pipe(pipednipote) < 0)
             {
                 printf("Errore nel piping.\n");
                 exit(6);
             }
 
-            /* Creazione del nipote */
+            /* Creazione del NIPOTE */
             if ((pid = fork()) < 0)
             {
                 printf("Errore nella fork.\n");
                 exit(5);
             }
-
             if (pid == 0)
             {
                 /* Codice del NIPOTE */
+
+                /* Chiudo il lato di pipe usata dal figlio per comunicare al padre siccome il nipote non la utilizza */
+                close(piped[i][1]);
+
+                /* Redirigo stdin sul file associato a questo nipote (tracciato dall'indice i) */
+                close(0);
+                if (open(argv[i + 1], O_RDONLY) < 0)
+                {
+                    printf("Errore nell'apertura del file");
+                    exit(9);
+                }
+
                 /* Ridirigo lo standard output su pipednipote[1] */
                 close(1);
                 dup(pipednipote[1]);
-                
+            
                 /* Chiudo il lato di pipe il nipote non utilizza */
                 close(pipednipote[0]);
                 /* Chiudo il lato di pipe gia' duplicato */
                 close(pipednipote[1]);
 
-                /* Redirigo stdin */
-                int fd;
-                close(0);
-                if ((fd = open(argv[i + 1], O_RDONLY)) < 0)
-                {
-                    printf("Errore nell'apertura del file");
-                    exit(9);
-                }
+                /* Per evitare messaggi d'errore ridirigo stderr su /dev/null */
+                close(2);
+                open("/dev/null", O_WRONLY);
 
                 /* Eseguo il wc -l */
                 execlp("wc", "wc", "-l", (char*)0);
@@ -121,19 +129,39 @@ int main(int argc, char** argv)
             }
 
             /* Codice del figlio */
+
             /* Chiudo il lato della pipe non utilizzato */
             close(pipednipote[1]);
 
-            /* Leggo dalla pipednipote il valore di ritorno di wc -l */
-            read(pipednipote[0], &lunghezza, sizeof(lunghezza));
-            /* Scrivo il valore su piped[i][1] per comunicarlo al padre */
-            write(piped[i][1], &lunghezza, sizeof(lunghezza));
+            /* Devo leggere dalla pipe un carattere alla volta */
+            j = 0;
+            while (read(pipednipote[0], &(numero[j]), 1))
+            {
+                j++;
+            }
 
-            /* Aspetto il nipote per assicurarmi di avere qualcosa da leggere dalla pipednipote */
+            /* Nel caso in cui il figlio abbia letto qualcosa */
+            if (j != 0)
+            {   
+                /* Sostituisco il carattere newline con un terminatore di stringa */
+                numero[j - 1] = '\0';
+                /* Converto l'array di char in un numero intero */
+                valore = atoi(numero);
+            }
+            else 
+            {
+                /* Se non ho letto nulla, considero che il file sia vuoto */
+                valore = 0;
+            }
+
+            /* Scrivo il valore su piped[i][1] per comunicarlo al padre */
+            write(piped[i][1], &valore, sizeof(valore));
+
+            /* Devo aspettare il nipote per poter restituire il valore al padre */
+            ritorno = -1;
             if ((pid = wait(&status)) < 0)
             {
                 printf("Errore nella wait del figlio.\n");
-                exit(8);
             }
             if ((status & 0xFF) != 0)
             {
@@ -142,15 +170,10 @@ int main(int argc, char** argv)
     		else
 		    { 	
                 ritorno = (int)((status >> 8) &	0xFF); 
-		      	if (ritorno != 0)
-                {
-                    printf("Il nipote con pid = %d ha ritornato %d e quindi vuole dire che il nipote non e' riuscito ad eseguire il wc -l oppure e' incorso in un errore\n", pid, ritorno);
-                }
-		      	else
-                {
-                    printf("Il nipote con pid = %d ha ritornato %d\n", pid, ritorno);
-                }  	
+                printf("DEBUG-Processo nipote %d ha ritornato %d\n", pid, ritorno); 	
 		    }
+
+            exit(ritorno);
         }
     }
 
@@ -165,11 +188,12 @@ int main(int argc, char** argv)
     for (int i = 0; i < N; i++)
     {
         /* Leggo dalla piped[0] il valore scritto dal figlio */
-        read(piped[i][0], &lunghezza, sizeof(lunghezza));
+        read(piped[i][0], &valore, sizeof(valore));
         /* Stampo su stdout la lunghezza del file corrispondente */
-        printf("Il file %s ha lunghezza pari a %d righe.\n", argv[i + 1], lunghezza);
+        printf("Il file %s ha lunghezza pari a %d righe.\n", argv[i + 1], valore);
+        somma = somma + (long int)valore;
     }
-    
+    printf("La somma risultante di tutti i valori comunicati dai figli e': %ld\n", somma);
 
     /* Aspetto tutti i figli */
     for (i = 0; i < N; i++)
@@ -188,11 +212,11 @@ int main(int argc, char** argv)
             ritorno = (int)((status >> 8) &	0xFF); 
 	      	if (ritorno != 0)
             {
-                printf("Il figlio con pid = %d ha ritornato %d. Cio' significa che il nipote non e' riuscito ad eseguire il wc -l oppure il figlio o il nipote sono incorsi in errori\n", pid, ritorno);
+                printf("Processo figlio %d ha ritornato %d. Si sono verificati dei problemi: il nipote non è riuscito ad eseguire il wc oppure è terminato in modo anormale\n", pid, ritorno);
             }
 	      	else
             {
-                printf("Il figlio con pid = %d ha ritornato %d\n", pid, ritorno);
+                printf("Processo figlio %d ha ritornato %d\n", pid, ritorno);
             }  	
 	    }
     }
