@@ -72,22 +72,48 @@
             "$0"
         ]
     },
-    "t-pipe: normal": {
-        "prefix": "t-pipe: normal",
+    "t-pipe: single": {
+        "prefix": "t-pipe: single",
         "body": [
-            "/* Creo una pipe per consentire la comunicazione ${1:padre}-${2:figlio} verificando se l'operazione va a buon fine */",
-            "if ((pipe(${3:piped})) < 0)",
+            "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
+            "if ((pipe(${3:pipedFiglio})) < 0)",
             "{",
             "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\tprintf(\"Errore nel piping.\\n\");",
             "\texit(3);",
             "}",
             "",
-            "$0"
+            "/* Genero un processo ${4:nipote} */",
+            "/* Controllo che la fork() abbia successo */",
+            "if ((pid = fork()) < 0)",
+            "{",
+            "\t/* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */",
+            "\tprintf(\"Errore nella fork.\\n\");",
+            "\texit(4);",
+            "}",
+            "",
+            "/* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del ${5:nipote} */",
+            "if (pid == 0)",
+            "{",
+            "\t/* Codice del ${6:nipote} */",
+            "\tprintf(\"DEBUG-Esecuzione del processo ${7:nipote} %d\\n\", getpid());",
+            "\t",
+            "\t/* Chiusura del lato di pipe non utilizzato dal ${8:nipote} */",
+            "\tclose(${9:pipedFiglio[0]});",
+            "\t",
+            "\t$0",
+            "}",
+            "",
+            "/* Codice del ${10:figlio} */",
+            "",
+            "/* Chiusura del lato di pipe non utilizzato dal ${11:figlio} */",
+            "close(${12:pipedFiglio[1]});",
+            "",
+            ""
         ]
     },
-    "t-pipe: vector": {
-        "prefix": "t-pipe: vector",
+    "t-pipe: multiple": {
+        "prefix": "t-pipe: multiple",
         "body": [
             "/* Allocazione dell'array di pipe */",
             "piped = (pipe_t*)malloc(${1:N} * sizeof(pipe_t));",
@@ -180,31 +206,74 @@
             "/* Codice del ${5:padre} */",
             "",
             "/* Chiusura del lato di pipe non utilizzato dal ${8:padre} */",
-            "close(${9:piped[1]})",
+            "close(${9:piped[1]});",
             "",
             ""
         ]
     },
-    "t-wait": {
-        "prefix": "t-wait",
+    "t-wait: son-grandson": {
+        "prefix": "t-wait: son-grandson",
         "body": [
-            "/* Aspetto il ${1:figlio} */",
-            "if ((${2:pidFiglio} = wait(&status)) < 0)",
+            "/* Aspetto il nipote */",
+            "ritorno = -1;",
+            "if ((pidNipote = wait(&status)) < 0)",
             "{",
-            "\tprintf(\"Errore del ${3:padre} in wait.\\n\");",
-            "\texit(8);",
+            "\tprintf(\"Errore del figlio in wait.\\n\");",
             "}",
             "if ((status & 0xFF) != 0)",
             "{",
-            "\tprintf(\"Processo ${4:figlio} %d terminato in modo anomalo.\\n\", pid);",
+            "\tprintf(\"Processo nipote %d terminato in modo anomalo.\\n\", pid);",
             "}",
     		"else",
 		    "{",
             "\tritorno = (int)((status >> 8) & 0xFF);",
-            "\tprintf(\"Il processo ${5:figlio} %d ha ritornato %d.\\n\", ${6:pid}, ritorno);",
+            "\tprintf(\"Il processo nipote %d ha ritornato %d.\\n\", pidNipote, ritorno);",
 		    "}",
             "",
-            "$0"
+            "exit(ritorno);"
+        ]
+    },
+    "t-wait: father-son (single)": {
+        "prefix": "t-wait: father-son (single)",
+        "body": [
+            "/* Aspetto il figlio */",
+            "if ((pidFiglio = wait(&status)) < 0)",
+            "{",
+            "\tprintf(\"Errore del padre in wait.\\n\");",
+            "\texit(8);",
+            "}",
+            "if ((status & 0xFF) != 0)",
+            "{",
+            "\tprintf(\"Processo nipote %d terminato in modo anomalo.\\n\", pid);",
+            "}",
+    		"else",
+		    "{",
+            "\tritorno = (int)((status >> 8) & 0xFF);",
+            "\tprintf(\"Il processo nipote %d ha ritornato %d.\\n\", pidFiglio, ritorno);",
+		    "}"
+        ]
+    },
+    "t-wait: father-son (multiple)": {
+        "prefix": "t-wait: father-son (multiple)",
+        "body": [
+            "/* Aspetto i figli */",
+            "for (i = 0; i < {1:N}; i++)",
+            "{",
+            "\tif ((pidFiglio = wait(&status)) < 0)",
+            "\t{",
+            "\t\tprintf(\"Errore del padre in wait.\\n\");",
+            "\t\texit(8);",
+            "\t}",
+            "\tif ((status & 0xFF) != 0)",
+            "\t{",
+            "\t\tprintf(\"Processo nipote %d terminato in modo anomalo.\\n\", pid);",
+            "\t}",
+    		"\telse",
+		    "\t{",
+            "\t\tritorno = (int)((status >> 8) & 0xFF);",
+            "\t\tprintf(\"Il processo nipote %d ha ritornato %d.\\n\", pidFiglio, ritorno);",
+		    "\t}",
+            "}"
         ]
     },
     "t-shell": {

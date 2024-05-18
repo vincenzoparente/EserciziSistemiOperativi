@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */
 
@@ -16,12 +17,18 @@ int main(int argc, char** argv)
     int N;					/* numero di file passati sulla riga di comando */
     int i,j;				/* indici per i cicli */
     pipe_t *piped;			/* array dinamico di pipe descriptors */
-    pipe_t pipednipote;     /* pipe per la comunicazione tra figlio e nipote */
+    pipe_t pipedNipote;     /* pipe per la comunicazione tra figlio e nipote */
+    char c;                 /* variabile in cui salvo temporaneamente i caratteri letti */
     int status;				/* variabile di stato per la wait */
     int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
+    struct raccoltaDati {
+        int c1;             /* PID del nipote */
+        int c2;             /* lunghezza di linea (terminatore compreso) */
+        char c3[250];       /* linea letta */
+    } datiLetti;
     
     /* -------------------------------------------- */
-
+    
     if (argc < 3)
     {
         printf("Numero di parametri errato: argc = %d, ma dovrebbe essere >= 3\n", argc);
@@ -70,19 +77,9 @@ int main(int argc, char** argv)
         {
             /* Codice del figlio */
             printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
-
-            /* Chiudo i lati di pipe non utilizzati dal figlio */
-            for (j = 0; j < N; j++)
-            {
-                close(piped[i][0]);
-                if (i != j) 
-                {
-                    close(piped[i][1]);
-                }
-            }
             
             /* Creo una pipe per consentire la comunicazione figlio-nipote verificando se l'operazione va a buon fine */
-            if ((pipe(pipednipote)) < 0)
+            if ((pipe(pipedNipote)) < 0)
             {
                 /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
                 printf("Errore nel piping.\n");
@@ -103,91 +100,131 @@ int main(int argc, char** argv)
             {
                 /* Codice del nipote */
                 printf("DEBUG-Esecuzione del processo nipote %d\n", getpid());
-                
-                /* Chiudo il lato di pipe non usato dal nipote */
-                close(pipednipote[0]);
-                /* Chiudo il lato di pipe ereditato dal figlio che lo utilizza per comunicare al padre */
+
+                /* Chiusura del lato di pipe del figlio non utilizzata dal nipote, ma ereditata */
                 close(piped[i][1]);
+                
+                /* Chiusura del lato di pipe non utilizzato dal nipote */
+                close(pipedNipote[0]);
+                
+                /* Chiudo stdout e lo sostituisco con la pipe del nipote */
+                close(1);
+                dup(pipedNipote[1]);
+                close(pipedNipote[1]);
 
-                /* Eseguo il sort del file corrispondente */
-                execlp("sort", "sort", "-f", argv[i +1], (char*)0);
+                /* Chiudo stdin e lo sostituisco con il file da ordinare */
+                close(0);
+                if (open(argv[i + 1], O_RDONLY) < 0) 
+                {
+                    printf("Errore nell'apertura del file %s", argv[i + 1]);
+                    exit(-1);
+                }
 
-                /* Se torno qui ho avuto un errore con la exec */
-                printf("Errore nella exec.\n");
+                /* Eseguo il comando sort sul file da ordinare usando la exec */
+                execlp("sort", "sort", "-f", (char*)0);
+
+                /* Se torno qui, si è verificato un errore */
+                perror("Errore in sort.\n");
                 exit(-1);
             }
             
             /* Codice del figlio */
-            /* Chiudo il lato di pipe non usato dal figlio */
-            close(pipednipote[1]);
+            
+            /* Chiusura del lato di pipe non utilizzato dal figlio */
+            close(pipedNipote[1]);
+            
+            /* Chiudo i lati di pipe non utilizzati dal figlio */
+            for (j = 0; j < N; j++)
+            {
+                close(piped[i][0]);
+                if (i != j)
+                {
+                    close(piped[i][1]);
+                }
+            }
+
+            /* Scrivo il pid del nipote nella struttura dati */
+            datiLetti.c1 = pid;
+
+            /* Leggo dalla pipe solo la prima riga */
+            while (read(pipedNipote[0], &c, 1) && j < 248)
+            {
+                /* Scrivo sulla pipe il carattere letto */
+                write(piped[i][1], &c, 1);
+                /* Se incontro un \n, ho finito di leggere la prima riga */
+                if (c == '\n')
+                {
+                    break;
+                }
+                j++;
+            }
+            /* Inserisco il terminatore */
+            j++;
+            datiLetti.c3[j] = '\0';
+            /* Salvo la lunghezza della stringa (terminatore compreso) */
+            datiLetti.c2 = j + 1;
+
+            /* Scrivo sulla pipe i dati da inviare al padre */
+            write(piped[i][1], &(datiLetti.c1), sizeof(int));
+            write(piped[i][1], &(datiLetti.c2), sizeof(int));
+            write(piped[i][1], datiLetti.c3, sizeof(char) * 250);
+
+            /* Aspetto il nipote */
+            ritorno = -1;
+            if ((pid = wait(&status)) < 0)
+            {
+                printf("Errore del figlio in wait.\n");
+            }
+            if ((status & 0xFF) != 0)
+            {
+                printf("Processo nipote %d terminato in modo anomalo.\n", pid);
+            }
+            else
+            {
+                ritorno = (int)((status >> 8) & 0xFF);
+                printf("Il processo nipote %d ha ritornato %d.\n", pid, ritorno);
+            }
+            
+            exit(ritorno);
         }
     }
     
     /* Codice del padre */
-    /* Chiudo i lati di pipe non utilizzati dal padre */
+
+    /* Chiudo il lato di pipe non usato dal padre */
     for (i = 0; i < N; i++)
     {
         close(piped[i][1]);
     }
     
+    /* Leggo i dati inviati dai figli */
+    for (i = 0; i < N; i++)
+    {
+        read(piped[i][1], &(datiLetti.c1), sizeof(int));
+        read(piped[i][1], &(datiLetti.c2), sizeof(int));
+        read(piped[i][1], datiLetti.c3, sizeof(char) * 250);
+        printf("%d %d %s\n", datiLetti.c1, datiLetti.c2, datiLetti.c3);
+    }
+
+    /* Aspetto i figli */
+    for (i = 0; i < N; i++)
+    {
+        /* Aspetto il figlio */
+        if ((pid = wait(&status)) < 0)
+        {
+            printf("Errore del padre in wait.\n");
+            exit(8);
+        }
+        if ((status & 0xFF) != 0)
+        {
+            printf("Processo figlio %d terminato in modo anomalo.\n", pid);
+        }
+        else
+        {
+            ritorno = (int)((status >> 8) & 0xFF);
+            printf("Il processo figlio %d ha ritornato %d.\n", pid, ritorno);
+        }
+    }
     
     exit(0);
 }
-
-/*
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWXOdllokKXNWWWWWNXXNNXNWMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNK00Okkxoc;'....';:ldddddolooloxxOXNWMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXOxddoc:;;:;;,..''...',;::clllc::clcclx0WM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKkoccolc;,,;:;:cc;,,'':llooodxxxdoolooc::lkN
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNklc:::c::::;,::;coocclodxxooooddddooolc;,;:oX
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKo;;:::;;;;;;,;:::::clloddol:;;:clcc:;;;;;;cdXW
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWWWWWWWWWWMMMMMMMMMMMWKxc:;::::;;,,;'';;,....';:;,''..'clclc;:::dxx0NMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWWWMMMMMMMMWWWNNXXXXXXKKK00OOO0KXXNNNNNXXX0koc::::ccc:;,'',;::;,........;c,.oNWNNX0KKXWWWMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNK0OkkOOkO0KXXXXXXXKK0KKKKKXXK00OOkkxkkOOO0Okxddxxxdl:;::;::c:,'',;cloc:;'...',cdo',OMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0OxdooolooddxxxkxxxkkxxdddkOO000KK0Okxkxkkkxxkkkxdddoolc::;;;;:c;'',,,cdxdl:;;''',:cc',ONWMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0xollllloodxxxxxddddddddoodddkOOOOOO0KK0kkkkOkxddddooolccccc::;;:;,,,'...;lodolc::;,,;;;,,cox0NWMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNNXK0kdollooooddoodxxddddddxddxkkkxkO000kxxxkkOxdxxkkkkkxdollcccccc::;,,'',,'',..,:clolc:;;clc;,,,,:okOXWMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNXK0OkxxxdoooddxxxkOkkxxddollooodxkO00OkO00OOkddddxxddodxxkO00Oxoc::::cc:,....',,;;;....';:llc::lol:::;,cxk0NWMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMWNXKKOkdooodddddoodddodddxkkOOOkxdlc:ccodxk00OO0OkkxxdoddddoolloddxO0K0Odccc:cc:,''',,;:;;'...'cdollc:;;::clc:,,,;ok0XNMMMMMMM
-MMMMMMMMMMMMMMMMMMWWNXK0Okddooolllodddxxdooollllodxxxkkxxdol:;;cldxOOkkxdddolcllllllllcclodxkkkkkdollc::;;;,''''....,ckNMMWNK0Okxdolc::;;::ccldKWMMMMM
-MMMMMMMMMMMWWNXXK00Okxddoooollccllodddddoooolcccloodooollllc::::codxxddlcolccccccccccccclloolllllc::;;;;,,,'.....;lx0NWMMMMMMMMMMMWX0kdl::clldOXMMMMMM
-MMMMMMMWXKK0Okxxxxxddoolllccc::cllloodxdollolccccllllllc:::;;;;;;:llooc;;:;;::::::;;:ccccc:::;:::;,,;;,'....';ldOXWMMMMMMMMMMMMMMMMMMMWNK000XNMMMMMMMM
-MMMMWX0kddddddddddddddolcc:::::cccclodxddoloolcccccccc::::;;,'',,,;;:c:;:::::c::;;,,,,;:c:,,,,;;;,'',,,;coxk0XWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMWKkdooollllooooddddollcc::::;::::clodddolloolccccccccccc:;,'''',,;;::ccccccc:;,'''.',;;,;;;,''...',;o0NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MNOoolllccccccccllllllc::;;;;,,;;;;;;:cloooooddolcccccccccc::;;;;:::::cccc::;;,,'''...',;;;,'.....,;:dXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-WOllc::::;;;;::::::::::;;,,,'''',,,,''',::llccllllllllllllccccclllc:;,,,;;;;;;,,'''..':lc,.....'',;ckNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-Xd:::;;;::ccccccccllcccc:::;;,',,,,,'....,;;;,,;;:cllllclooooooolcc:;,',;:;;;;,,'''''',:c:'...'::,':kNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-Xd:;;cxOKXXXXXXXNNNNNNNNXXXKK000KKK0Okd;....''''''',:::::codxxxolc::::,',,,''''''''''';:llc:;;:dOkc',cok0XXKOkOXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-WO:;l0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNOd:,'............,codollcc:;;;,.........';:oxOKNNKkdc:oOXWN0xdolloolc;l0WMMMM $ echo DEBUG-AAAAAARRRRRR MMMMMM
-MNk:lKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNK00Okxoc,.....cddol::;;;,,,'...',;:ldkKNWMMMMMMMWXxodOWMMMMMWWNNNNkoOWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMW0odKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXOd:':ddlc:;,,;;,,:dkk0KXXWWMMMMMMMMMMMMMMWX00NMMMMMMMMMMMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMN0k0KNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNOollc:;,,,,,'':OWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMWXK00KXWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXko:,;:::;,''''.':OWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMWNKKKKKKXNWWMMMMMMMMMMMMMMMMMMMMMMMMMWXOo;'...',;,'...'..c0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMWNNXXNNNWMMMMMMMMMMMMMMMMMNKOkxoc;''.....','.......'dWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXxc,............',,'.......cKMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXo'.............',,'...';cokXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW0c.......;loddo:,;,'...:kXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWx,......l0NWMMWKoc;,'..lXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXl......lXMMMMMXd:c:,.'oXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMKc......,kWMMMMMWkc;,''cKMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMKc.......cKMMMMMMMWkc;,,c0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMO,.......lXMMMMMMMMNx:,,:dXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNd'.... .cKMMMMMMMMMKo:,,cxNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNo......,x0XWMMMMMMNd:,';coONWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMWWWWWWWWWWWWMMMMMMMXo.......';lONMMMMNd;,'';:cokOKKKKXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMWNNNXXXKKKKKKKKKKKKKOc,'',,,,;;ckKKKKk:','..,;;;::c:;codkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMWWWWWNNNNXXXXKK0OOOOOkkkkkkkkxxc'.''.....'','...',;lkKKKXXXXXXXXXXXXXXNNNNNNNNNNNWWWWWWWWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWWWNXKK0OOkdc;'..':lllcc:;;:ldkOO0000000KKKKXXXXXXXNNNNNNNNNNNNNNWWWWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWNNNXKkkOXNNNNNNNNNWWWWWWWWWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-*/
