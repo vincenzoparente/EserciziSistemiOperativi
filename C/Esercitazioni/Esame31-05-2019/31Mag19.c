@@ -147,27 +147,25 @@ int main(int argc, char** argv)
             datiLetti.c1 = pid;
 
             /* Leggo dalla pipe solo la prima riga */
-            while (read(pipedNipote[0], &c, 1) && j < 248)
+            j = 0;
+            while (read(pipedNipote[0], &(datiLetti.c3[j]), 1) && j < 248)
             {
                 /* Scrivo sulla pipe il carattere letto */
-                write(piped[i][1], &c, 1);
+                write(piped[i][1], &(datiLetti.c3[j]), 1);
                 /* Se incontro un \n, ho finito di leggere la prima riga */
                 if (c == '\n')
                 {
+                    /* Salvo la lunghezza della sequenza di caratteri (\n escluso) */
+                    datiLetti.c2 = j;
                     break;
                 }
                 j++;
             }
-            /* Inserisco il terminatore */
-            j++;
-            datiLetti.c3[j] = '\0';
-            /* Salvo la lunghezza della stringa (terminatore compreso) */
-            datiLetti.c2 = j + 1;
+            /* Reset di j a 0 */
+            j = 0;
 
             /* Scrivo sulla pipe i dati da inviare al padre */
-            write(piped[i][1], &(datiLetti.c1), sizeof(int));
-            write(piped[i][1], &(datiLetti.c2), sizeof(int));
-            write(piped[i][1], datiLetti.c3, sizeof(char) * 250);
+            write(piped[i][1], &datiLetti, sizeof(datiLetti));
 
             /* Aspetto il nipote */
             ritorno = -1;
@@ -181,8 +179,8 @@ int main(int argc, char** argv)
             }
             else
             {
-                ritorno = (int)((status >> 8) & 0xFF);
-                printf("Il processo nipote %d ha ritornato %d.\n", pid, ritorno);
+                /* Ritorno la lunghezza della linea terminatore compreso */
+                ritorno = datiLetti.c2 + 1;
             }
             
             exit(ritorno);
@@ -200,9 +198,11 @@ int main(int argc, char** argv)
     /* Leggo i dati inviati dai figli */
     for (i = 0; i < N; i++)
     {
-        read(piped[i][1], &(datiLetti.c1), sizeof(int));
-        read(piped[i][1], &(datiLetti.c2), sizeof(int));
-        read(piped[i][1], datiLetti.c3, sizeof(char) * 250);
+        read(piped[i][0], &datiLetti, sizeof(datiLetti));
+
+        /* Inserisco qui il terminatore (ciò signfica trasformare c3 in stringa... FOLLIA)*/
+        datiLetti.c3[datiLetti.c2 + 1] = '\0';
+
         printf("%d %d %s\n", datiLetti.c1, datiLetti.c2, datiLetti.c3);
     }
 

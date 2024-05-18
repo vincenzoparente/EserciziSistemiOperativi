@@ -164,15 +164,15 @@ int main(int argc, char **argv)
     /* Il padre recupera le informazioni dai figli: in ordine di indice */
     for (i=0; i<N; i++)
     {
-     /* si legge la struttura inviata  dal figlio i-esimo */
+        /* si legge la struttura inviata  dal figlio i-esimo */
         nr = read(piped[i][0], &S, sizeof(S));
         if (nr != 0)
         {
         	/* Nota bene: la stampa della linea con il formato %s richiede che il padre inserisca il terminatore di stringa nel posto giusto, cioe' dopo il terminatore di linea */
             S.linea_letta[S.lung_linea+1]='\0'; /* dato che lung_linea rappresenta la lunghezza della linea, NON compreso il terminatore, per avere l'indice giusto dobbiamo incrementare questo valore */
             printf("Il nipote con pid %d ha letto dal file %s questa linea '%s' che ha lunghezza (NON compreso il terminatore) di %d caratteri:\n",  S.pid_nipote, argv[i+1], S.linea_letta, S.lung_linea);
-         }
-     }
+        }
+    }
     /* Il padre aspetta i figli */
     for (i=0; i < N; i++)
     {
