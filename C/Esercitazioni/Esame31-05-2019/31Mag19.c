@@ -18,7 +18,6 @@ int main(int argc, char** argv)
     int i,j;				/* indici per i cicli */
     pipe_t *piped;			/* array dinamico di pipe descriptors */
     pipe_t pipedNipote;     /* pipe per la comunicazione tra figlio e nipote */
-    char c;                 /* variabile in cui salvo temporaneamente i caratteri letti */
     int status;				/* variabile di stato per la wait */
     int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
     struct raccoltaDati {
@@ -77,13 +76,23 @@ int main(int argc, char** argv)
         {
             /* Codice del figlio */
             printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
+
+            /* Chiudo i lati di pipe non utilizzati dal figlio */
+            for (j = 0; j < N; j++)
+            {
+                close(piped[i][0]);
+                if (i != j)
+                {
+                    close(piped[i][1]);
+                }
+            }
             
             /* Creo una pipe per consentire la comunicazione figlio-nipote verificando se l'operazione va a buon fine */
             if ((pipe(pipedNipote)) < 0)
             {
                 /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
                 printf("Errore nel piping.\n");
-                exit(3);
+                exit(-1);
             }
             
             /* Genero un processo nipote */
@@ -92,7 +101,7 @@ int main(int argc, char** argv)
             {
                 /* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */
                 printf("Errore nella fork.\n");
-                exit(4);
+                exit(-1);
             }
             
             /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del nipote */
@@ -112,16 +121,8 @@ int main(int argc, char** argv)
                 dup(pipedNipote[1]);
                 close(pipedNipote[1]);
 
-                /* Chiudo stdin e lo sostituisco con il file da ordinare */
-                close(0);
-                if (open(argv[i + 1], O_RDONLY) < 0) 
-                {
-                    printf("Errore nell'apertura del file %s", argv[i + 1]);
-                    exit(-1);
-                }
-
                 /* Eseguo il comando sort sul file da ordinare usando la exec */
-                execlp("sort", "sort", "-f", (char*)0);
+                execlp("sort", "sort", "-f", argv[i + 1], (char*)0);
 
                 /* Se torno qui, si è verificato un errore */
                 perror("Errore in sort.\n");
@@ -132,28 +133,18 @@ int main(int argc, char** argv)
             
             /* Chiusura del lato di pipe non utilizzato dal figlio */
             close(pipedNipote[1]);
-            
-            /* Chiudo i lati di pipe non utilizzati dal figlio */
-            for (j = 0; j < N; j++)
-            {
-                close(piped[i][0]);
-                if (i != j)
-                {
-                    close(piped[i][1]);
-                }
-            }
 
             /* Scrivo il pid del nipote nella struttura dati */
             datiLetti.c1 = pid;
 
             /* Leggo dalla pipe solo la prima riga */
             j = 0;
-            while (read(pipedNipote[0], &(datiLetti.c3[j]), 1) && j < 248)
+            while (read(pipedNipote[0], &(datiLetti.c3[j]), 1))
             {
                 /* Scrivo sulla pipe il carattere letto */
                 write(piped[i][1], &(datiLetti.c3[j]), 1);
                 /* Se incontro un \n, ho finito di leggere la prima riga */
-                if (c == '\n')
+                if (datiLetti.c3[j] == '\n')
                 {
                     /* Salvo la lunghezza della sequenza di caratteri (\n escluso) */
                     datiLetti.c2 = j;
