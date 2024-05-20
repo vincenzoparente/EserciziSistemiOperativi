@@ -276,6 +276,26 @@
             "}"
         ]
     },
+    "t-open: openfile": {
+        "prefix": "t-open: openfile",
+        "body": [
+            "/* Apertura del file e controllo esito */",
+            "if((fd = open(argv[${1:n+1}], ${2:O_RDWR})) < 0){",
+            "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", argv[${1:n+1}]);",
+            "\texit(${3: });",
+            "}",
+            "$0"
+        ]
+    },
+    "t-exec: exc-fail": {
+        "prefix": "t-exec: exc-fail",
+        "body": [
+            "/* Codice che viene eseguito solo in caso di fallimento della exec */",
+            "printf(\"Errore in exec!\\n\");",
+            "exit(-1);",
+            "$0"
+        ]
+    },
     "t-shell": {
         "prefix": "t-shell",
         "body": [
