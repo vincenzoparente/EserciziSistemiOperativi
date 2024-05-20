@@ -9,6 +9,13 @@
 
 typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */
 
+typedef struct {
+    int c1;         /* campo c1 del testo */
+    char c3[250];  /* campo c2 del testo */
+                            /* bastano 250 caratteri per contenere ogni riga insieme con il terminatore di linea e con il terminatore di stringa (vedi specifica) */
+    int c2;         /* campo c3 del testo */
+} Strut;
+
 int main(int argc, char** argv)
 {
     /* ------------- Variabili locali ------------- */
@@ -20,17 +27,13 @@ int main(int argc, char** argv)
     pipe_t pipedNipote;     /* pipe per la comunicazione tra figlio e nipote */
     int status;				/* variabile di stato per la wait */
     int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
-    struct raccoltaDati {
-        int c1;             /* PID del nipote */
-        int c2;             /* lunghezza di linea (terminatore compreso) */
-        char c3[250];       /* linea letta */
-    } datiLetti;
+    Strut datiLetti;        /* struttura usata dai figli e dal padre */
     
     /* -------------------------------------------- */
     
-    if (argc < 3)
+    if (argc < 4)
     {
-        printf("Numero di parametri errato: argc = %d, ma dovrebbe essere >= 3\n", argc);
+        printf("Numero di parametri errato: argc = %d, ma dovrebbe essere >= 4\n", argc);
         exit(1);
     }
     
@@ -80,10 +83,10 @@ int main(int argc, char** argv)
             /* Chiudo i lati di pipe non utilizzati dal figlio */
             for (j = 0; j < N; j++)
             {
-                close(piped[i][0]);
+                close(piped[j][0]);
                 if (i != j)
                 {
-                    close(piped[i][1]);
+                    close(piped[j][1]);
                 }
             }
             
@@ -112,7 +115,7 @@ int main(int argc, char** argv)
 
                 /* Chiusura del lato di pipe del figlio non utilizzata dal nipote, ma ereditata */
                 close(piped[i][1]);
-                
+
                 /* Chiusura del lato di pipe non utilizzato dal nipote */
                 close(pipedNipote[0]);
                 
@@ -141,8 +144,6 @@ int main(int argc, char** argv)
             j = 0;
             while (read(pipedNipote[0], &(datiLetti.c3[j]), 1))
             {
-                /* Scrivo sulla pipe il carattere letto */
-                write(piped[i][1], &(datiLetti.c3[j]), 1);
                 /* Se incontro un \n, ho finito di leggere la prima riga */
                 if (datiLetti.c3[j] == '\n')
                 {
@@ -170,8 +171,8 @@ int main(int argc, char** argv)
             }
             else
             {
-                /* Ritorno la lunghezza della linea terminatore compreso */
-                ritorno = datiLetti.c2 + 1;
+                /* Ritorno la lunghezza della linea terminatore escluso */
+                ritorno = datiLetti.c2 - 1;
             }
             
             exit(ritorno);
@@ -192,7 +193,7 @@ int main(int argc, char** argv)
         read(piped[i][0], &datiLetti, sizeof(datiLetti));
 
         /* Inserisco qui il terminatore (ciò signfica trasformare c3 in stringa... FOLLIA)*/
-        datiLetti.c3[datiLetti.c2 + 1] = '\0';
+        datiLetti.c3[datiLetti.c2] = '\0';
 
         printf("%d %d %s\n", datiLetti.c1, datiLetti.c2, datiLetti.c3);
     }
