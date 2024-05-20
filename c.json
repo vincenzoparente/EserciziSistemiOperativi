@@ -287,8 +287,8 @@
             "$0"
         ]
     },
-    "t-exec: exc-fail": {
-        "prefix": "t-exec: exc-fail",
+    "t-exec: exec-fail": {
+        "prefix": "t-exec: exec-fail",
         "body": [
             "/* Codice che viene eseguito solo in caso di fallimento della exec */",
             "printf(\"Errore in exec!\\n\");",
