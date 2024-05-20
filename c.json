@@ -279,7 +279,7 @@
     "t-open: openfile": {
         "prefix": "t-open: openfile",
         "body": [
-            "/* Apertura del file e controllo esito */",
+            "/* Apertura del file e controllo esistenza */",
             "if((fd = open(${1:argv[n+1]}, ${2:O_RDWR})) < 0){",
             "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", ${1:argv[n+1]});",
             "\texit($3);",
