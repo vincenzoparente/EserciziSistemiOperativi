@@ -1,4 +1,0 @@
-primalez riga
-riga 
-source
-drain
