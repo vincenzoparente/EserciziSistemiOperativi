@@ -64,7 +64,7 @@
             "$0"
         ]
     },
-    "t-pipe: pipe_t": {
+    "t-pipe: typedef pipe_t": {
         "prefix": "t-pipe: pipe_t",
         "body": [
             "typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */",
@@ -72,8 +72,35 @@
             "$0"
         ]
     },
-    "t-pipe: single": {
-        "prefix": "t-pipe: single",
+    "t-pipe: pipe (single)": {
+        "prefix": "t-pipe: pipe (single)",
+        "body": [
+            "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
+            "if (pipe(${3:piped}) < 0)",
+            "{",
+            "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
+            "\tprintf(\"Errore nel piping.\\n\");",
+            "\texit(3);",
+            "}"
+        ]
+    },
+    "t-pipe: pipe (multiple)": {
+        "prefix": "t-pipe: pipe (multiple)",
+        "body": [
+            "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
+            "for (${1:i} = 0; ${1:i} < ${2:N}; ${1:i}++)",
+            "{",
+            "/* Creazione della pipe */",
+            "if (pipe(${3:piped}[${1:i}]) < 0)",
+            "{",
+            "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
+            "\tprintf(\"Errore nel piping.\\n\");",
+            "\texit(3);",
+            "}"
+        ]
+    },
+    "t-combo: pipe-fork (single)": {
+        "prefix": "t-combo: pipe-fork (single)",
         "body": [
             "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
             "if ((pipe(${3:pipedFiglio})) < 0)",
@@ -112,8 +139,8 @@
             ""
         ]
     },
-    "t-pipe: multiple": {
-        "prefix": "t-pipe: multiple",
+    "t-combo: pipe-fork (multiple)": {
+        "prefix": "t-combo: pipe-fork (multiple)",
         "body": [
             "/* Allocazione dell'array di pipe */",
             "piped = (pipe_t*)malloc(${1:N} * sizeof(pipe_t));",
@@ -197,16 +224,32 @@
             "\t/* Codice del ${1:figlio} */",
             "\tprintf(\"DEBUG-Esecuzione del processo ${1:figlio} %d\\n\", getpid());",
             "\t",
-            "\t/* Chiusura del lato di pipe non utilizzato dal ${1:figlio} */",
-            "\tclose(${2:piped[0]});",
-            "\t",
             "\t$0",
             "}",
             "",
             "/* Codice del ${3:padre} */",
             "",
-            "/* Chiusura del lato di pipe non utilizzato dal ${3:padre} */",
-            "close(${4:piped[1]});",
+            ""
+        ]
+    },
+    "t-close: unused file (single)": {
+        "prefix": "t-close: closing unused file (single)",
+        "body": [
+            "/* Chiudo il file ${1:file} perche' inutilizzato */",
+            "close(${1:file});",
+            "",
+            "$0"
+        ]
+    },
+    "t-close: unused files (multiple)": {
+        "prefix": "t-close: closing unused files (multiple)",
+        "body": [
+            "/* Chiudo i ${1:file} perche' inutilizzati */",
+            "for (j = 0; j < ${2:N}; j++)",
+            "{",
+            "\tclose(${1:file});",
+            "\t$0",
+            "}",
             "",
             ""
         ]
