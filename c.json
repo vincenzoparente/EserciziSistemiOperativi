@@ -254,6 +254,38 @@
             ""
         ]
     },
+    "t-redirection: on existent file": {
+        "prefix": "t-redirection: on existent file",
+        "body": [
+            "/* Ridirigo ${1:stdout} su ${2:file} */",
+            "close(${3:1});",
+            "dup(${2:file});",
+            "",
+            "/* Chiudo ${2:file} che ho appena duplicato, quindi non serve piu' */",
+            "close(${2:file});",
+            "",
+            "$0"
+        ]
+    },
+    "t-redirection: on unexistent file": {
+        "prefix": "t-redirection: on unexistent file",
+        "body": [
+            "/* Ridirigo ${1:stdout} su ${2:file} */",
+            "close(${3:1});",
+            "int ${4:fd};",
+            "if (${4:fd} = open(${5:fd}, ${6:O_RDONLY}) < 0)",
+            "{",
+            "\tprintf(\"Errore nell'apertura del file\");",
+            "\texit(8);",
+            "}",
+            "close(${4:fd});",
+            "",
+            "/* Chiudo il lato della pipe che ho appena duplicato */",
+            "close(${2:file});",
+            "",
+            "$0"
+        ]
+    },
     "t-wait: son-grandson": {
         "prefix": "t-wait: son-grandson",
         "body": [
