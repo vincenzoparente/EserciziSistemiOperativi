@@ -9,60 +9,37 @@
 
 typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */
 
+typedef struct caratteriLetti {
+    char v1;        // Carattere cercato
+    long int v2;    // Numero di occorrenze
+} caratteriLetti;
+
 int main(int argc, char** argv)
 {
     /* ------------- Variabili locali ------------- */
     
     int pid;				/* process identifier per le fork() */
-    int N;					/* numero di file passati sulla riga di comando */
-    int i,j;				/* indici per i cicli */
-    pipe_t *piped;			/* array dinamico di pipe descriptors */
-    pipe_t p;               /* pipe per la comunicazione tra 26 esimo figlio e padre */
+    int i, j;				/* indici per i cicli */
+    int fd;                 /* file descriptor dell'unico file passato */
+    pipe_t piped[26];		/* array statico di pipe descriptors */
+    caratteriLetti cl[26];  /* array statico di strutture per salvare il carattere letto e le sue occorrenze */
     int status;				/* variabile di stato per la wait */
     int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
     
     /* -------------------------------------------- */
-
-    if (argc != 2)
-    {
-        printf("Numero di parametri errato: argc = %d, ma dovrebbe essere >= 2\n", argc);
-        exit(1);
-    }
     
-    /* Numero di parametri passati da linea di comando */
-    N = argc - 1;
-
-    /* Allocazione dell'array di pipe */
-    piped = (pipe_t*)malloc(26 * sizeof(pipe_t));
-    /* Controllo che l'allocazione di memoria sia andaata a buon fine */
-    if (piped == NULL)
-    {
-        /* In tal caso si e' verificato un errore nell'allocazione: stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
-        printf("Errore nell'allocazione della memoria per il vettore di pipe.\n");
-        exit(2);
-    }
-    
-    /* Creazione delle 26 pipe per la comunicazione tra figli */
+    /* Creo una pipe per consentire la comunicazione tra figli verificando se l'operazione va a buon fine */
     for (i = 0; i < 26; i++)
     {
-        /* Controllo che ogni creazione vada a buon fine */
+        /* Creazione della pipe */
         if (pipe(piped[i]) < 0)
         {
-            /* Non e' stato possibile creare la pipe con successo: stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
+            /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
             printf("Errore nel piping.\n");
             exit(3);
         }
     }
 
-    /* Creo una pipe per consentire la comunicazione tra padre e ultimo figlio verificando se l'operazione va a buon fine */
-    if ((pipe(p)) < 0)
-    {
-        /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
-        printf("Errore nel piping.\n");
-        exit(3);
-    }
-    
-    /* Generazione dei 26 figli */
     for (i = 0; i < 26; i++)
     {
         /* Genero un processo figlio */
@@ -79,36 +56,32 @@ int main(int argc, char** argv)
         {
             /* Codice del figlio */
             printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
-            
-            /* Chiudo i lati di pipe non utilizzati dal figlio */
-            for (j = 0; j < 26; j++)
+
+            /* Assegno alla struttura il carattere corrispondente */
+            cl[i].v1 = 'a' + i;
+            /* Faccio iniziare da 0 v2 */
+            cl[i].v2 = 0;
+
+            /* Apertura del file e controllo esistenza */
+            if((fd = open(argv[2], O_RDWR)) < 0)
             {
-                if (j == 25) 
-                {
-                    
-                }
-                if (j == 0 || (i - 1) != (j - 1))
-                {
-                    close(piped[j][0]);
-                }
-                if (i != j)
-                {
-                    close(piped[j][1]);
-                }
+                printf("Errore nell'apertura del file '%s'.\n", argv[2]);
+                exit(-1);
             }
             
-            
+            /* Ciclo di lettura dei caratteri */
+            char tmp;
+            while(read(fd, &tmp, 1))
+            {
+                if (cl[i].v1 == tmp)
+                {
+                    cl[i].v2++;
+                }
+            }
         }
     }
     
-    /* Codice del padre */
-    /* Chiudo il lato di pipe non usato dal padre */
-    for (i = 0; i < 26; i++)
-    {
-        close(piped[i][1]);
-    }
-    
-    
+    /* Codice del padre (fuori dal for perche' mi interessa eseguirlo solo quando il ciclo e' terminato) */
     
     exit(0);
 }

@@ -88,14 +88,15 @@
         "prefix": "t-pipe: pipe (multiple)",
         "body": [
             "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
-            "for (${1:i} = 0; ${1:i} < ${2:N}; ${1:i}++)",
+            "for (${3:i} = 0; ${3:i} < ${4:N}; ${3:i}++)",
             "{",
             "/* Creazione della pipe */",
-            "if (pipe(${3:piped}[${1:i}]) < 0)",
+            "if (pipe(${5:piped}[${3:i}]) < 0)",
             "{",
             "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\tprintf(\"Errore nel piping.\\n\");",
             "\texit(3);",
+            "\t}",
             "}"
         ]
     },
