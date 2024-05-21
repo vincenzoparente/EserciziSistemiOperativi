@@ -333,7 +333,7 @@
         "prefix": "t-wait: father-son (multiple)",
         "body": [
             "/* Aspetto i figli */",
-            "for (i = 0; i < {1:N}; i++)",
+            "for (i = 0; i < ${1:N}; i++)",
             "{",
             "\tif ((pidFiglio = wait(&status)) < 0)",
             "\t{",
