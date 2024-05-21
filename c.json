@@ -372,6 +372,59 @@
             "$0"
         ]
     },
+        "t-creat: createfile": {
+        "prefix": "t-creat: createfile",
+        "body": [
+            "/* Creazione del file ${1:NOMEFILE} */",
+            "if((fdout = creat(\"${2:PATH}\", 0644)) < 0){",
+            "\tprintf(\"Errore nella creazione del file\\n\");",
+            "exit(${3: });",
+            "}",
+            "$0"
+        ]
+    },
+    "t-read: readline": {
+        "prefix": "t-read: readline",
+        "body": [
+            "/* Lettura di ciascun carattere del file linea del file */",
+            "int ${1:j} = 0;",
+            "while(read(fd, &(${2:linea}[${1:j}]), 1) != 0){",
+            "\t/* Trovato il termine di una linea */",
+            "\tif(${2:linea}[${1:j}] == '\\n'){",
+            "",
+            "\t\t${3:/* Code */}",
+            "",
+            "\t\t${1:j} = 0;",
+            "\t}",
+            "\telse{",
+            "\t\t/* Aggiornamento indice */",
+            "\t\t${1:j}++;",
+            "\t}",
+            "}",
+            "$0"
+        ]
+    },
+    "t-read: readchar": {
+        "prefix": "t-read: readchar",
+        "body": [
+            "/* Lettura di ciascun carattere del file del file */",
+            "int ${1:j} = 0;",
+            "while(read(fd, &${2:ch}, 1) != 0){",
+            "\t/* Trovato il termine di una linea */",
+            "\tif(${2:ch} == '\\n'){",
+            "",
+            "\t\t${3:/* Code */}",
+            "",
+            "\t\t${1:j} = 0;",
+            "\t}",
+            "\telse{",
+            "\t\t/* Aggiornamento indice */",
+            "\t\t${1:j}++;",
+            "\t}",
+            "}",
+            "$0"
+        ]
+    },
     "t-shell": {
         "prefix": "t-shell",
         "body": [
