@@ -786,3 +786,7 @@ int main(int argc, char**argv)
 ```
 
 ![bef_aft_dup_and_close](resources/bef_aft_dup_and_close.png)
+
+## Segnali
+
+Un metodo alternativo per la sincronizzazione in UNIX sono i segnali.
