@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         {
             /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
             printf("Errore nel piping.\n");
-            exit(3);
+            exit(4);
         }
     }
     
