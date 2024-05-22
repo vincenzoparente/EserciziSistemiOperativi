@@ -213,7 +213,7 @@ int main(int argc, char** argv)
         read(pipedFigli[i][0], &nipoteOccur, sizeof(long int));
 
         printf("Il figlio di indice %d ha effettuato %ld trasformazioni sul file %s.\n", i, figlioOccur, argv[i + 1]);
-        printf("Il nipote corrispondente ha effettuato %ld trasformazioni sul file %s.\n", nipoteOccur, argv[i + 1]);
+        printf("Il nipote di indice %d ha effettuato %ld trasformazioni sul file %s.\n", i, nipoteOccur, argv[i + 1]);
     }
     
     /* Aspetto i figli */
