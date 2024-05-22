@@ -31,10 +31,19 @@ int main(int argc, char** argv)
     
     /* Numero di parametri passati da linea di comando */
     N = argc - 1;
-    printf("%d\n", N);
 
     pipedFigli = (pipe_t*)malloc(N * sizeof(pipe_t));
+    if (pipedFigli == NULL)
+    {
+        printf("Errore nella allocazione della memoria pipe figli-padre\n");
+        exit(3);
+    }
     pipedNipoti = (pipe_t*)malloc(N * sizeof(pipe_t));
+    if (pipedNipoti == NULL)
+    {
+        printf("Errore nella allocazione della memoria pipe nipoti-padre\n");
+        exit(3);
+    }
     
     /* Creo le pipe per consentire la comunicazione tra padre e figli verificando se l'operazione va a buon fine */
     for (i = 0; i < N; i++)
@@ -46,11 +55,6 @@ int main(int argc, char** argv)
             printf("Errore nel piping.\n");
             exit(3);
         }
-    }
-
-    /* Creo le pipe per consentire la comunicazione tra padre e nipoti verificando se l'operazione va a buon fine */
-    for (i = 0; i < N; i++)
-    {
         /* Creazione della pipe */
         if (pipe(pipedNipoti[i]) < 0)
         {
@@ -69,7 +73,7 @@ int main(int argc, char** argv)
         {
             /* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */
             printf("Errore nella fork.\n");
-            exit(4);
+            exit(5);
         }
         
         /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del figlio */
@@ -81,7 +85,7 @@ int main(int argc, char** argv)
             {
                 /* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */
                 printf("Errore nella fork.\n");
-                exit(4);
+                exit(6);
             }
             
             /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del nipote */
@@ -126,6 +130,8 @@ int main(int argc, char** argv)
 
                 /* Scrivo le occorrenze sulla pipe */
                 write(pipedFigli[i][1], &occur, sizeof(long int));
+
+                exit(occur / 256);
             }
 
             /* Codice del figlio */
