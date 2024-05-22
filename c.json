@@ -72,32 +72,60 @@
             "$0"
         ]
     },
-    "t-pipe: pipe (single)": {
-        "prefix": "t-pipe: pipe (single)",
+    "t-pipe: single piping": {
+        "prefix": "t-pipe: single piping",
         "body": [
-            "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
+            "/* Creo una pipe per consentire la comunicazione tra ${1:padre} e ${2:figlio} */",
             "if (pipe(${3:piped}) < 0)",
             "{",
             "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\tprintf(\"Errore nel piping.\\n\");",
             "\texit(3);",
-            "}"
+            "}",
+            "",
+            "$0"
         ]
     },
-    "t-pipe: pipe (multiple)": {
-        "prefix": "t-pipe: pipe (multiple)",
+    "t-pipe: multiple piping (dynamic array)": {
+        "prefix": "t-pipe: multiple piping (dynamic)",
         "body": [
-            "/* Creo una pipe per consentire la comunicazione tra ${1:figlio} e ${2:nipote} verificando se l'operazione va a buon fine */",
-            "for (${3:i} = 0; ${3:i} < ${4:N}; ${3:i}++)",
+            "/* Creo un vettore di pipe */",
+            "pipe_t* ${1:piped} = (pipe_t)malloc(${2:N} * sizeof(pipe_t));",
+            "",
+            "/* Creo le pipe per consentire la comunicazione tra ${3:padre} e ${4:figli} */",
+            "for (${5:i} = 0; ${5:i} < ${2:N}; ${5:i}++)",
             "{",
-            "/* Creazione della pipe */",
-            "if (pipe(${5:piped}[${3:i}]) < 0)",
-            "{",
-            "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
-            "\tprintf(\"Errore nel piping.\\n\");",
-            "\texit(3);",
+            "\t/* Creazione della pipe */",
+            "\tif (pipe(${1:piped}[${5:i}]) < 0)",
+            "\t{",
+            "\t\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
+            "\t\tprintf(\"Errore nel piping.\\n\");",
+            "\t\texit(3);",
+            "\t}",
             "}",
-            "}"
+            "",
+            "$0"
+        ]
+    },
+    "t-pipe: multiple piping (static array)": {
+        "prefix": "t-pipe: multiple piping (static)",
+        "body": [
+            "/* Dichiaro un array di pipe */",
+            "pipe_t ${1:piped}[${2:N}];",
+            "",
+            "/* Creo le pipe per consentire la comunicazione tra ${3:padre} e ${4:figli} */",
+            "for (${5:i} = 0; ${5:i} < ${2:N}; ${5:i}++)",
+            "{",
+            "\t/* Creazione della pipe */",
+            "\tif (pipe(${1:piped}[${5:i}]) < 0)",
+            "\t{",
+            "\t\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
+            "\t\tprintf(\"Errore nel piping.\\n\");",
+            "\t\texit(3);",
+            "\t}",
+            "}",
+            "",
+            "$0"
         ]
     },
     "t-combo: pipe-fork (single)": {
