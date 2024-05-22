@@ -71,9 +71,6 @@ int main(int argc, char** argv)
         /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del figlio */
         if (pid == 0)
         {
-            /* Codice del figlio */
-            printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
-            
             /* Genero un processo nipote */
             /* Controllo che la fork() abbia successo */
             if ((pid = fork()) < 0)
@@ -103,14 +100,33 @@ int main(int argc, char** argv)
 
                 /* Apertura del file e controllo esistenza */
                 int fd;
-                if((fd = open(argv[i+1], O_RDONLY)) < 0){
+                if((fd = open(argv[i+1], O_RDWR)) < 0){
                     printf("Errore nell'apertura del file '%s'.\n", argv[i+1]);
                     exit(-1);
                 }
                 
-                
+                /* Cerco le occorrenze numeriche */
+                /* Lettura di ciascun carattere del file */
+                char ch;
+                long int occur = 0;
+                while(read(fd, &ch, 1)){
+                    if (ch >= 'a' && ch <= 'z')
+                    {
+                        occur++;
+                        /* Eseguo la trasformazione in carattere maiuscolo */
+                        ch -= 32;
+                        lseek(fd, -1L, SEEK_CUR);
+                        write(fd, &ch, 1);
+                    }
+                }
+
+                /* Scrivo le occorrenze sulla pipe */
+                write(pipedFigli[i][1], &occur, sizeof(long int));
             }
 
+            /* Codice del figlio */
+            printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
+        
             /* Chiudo i file descriptors non necessari */
             for (j = 0; j < N; j++)
             {
@@ -122,6 +138,50 @@ int main(int argc, char** argv)
                 close(pipedNipoti[j][0]);
                 close(pipedNipoti[j][1]);
             }
+        
+            /* Apertura del file e controllo esistenza */
+            int fd;
+            if ((fd = open(argv[i+1], O_RDWR)) < 0){
+                printf("Errore nell'apertura del file '%s'.\n", argv[i+1]);
+                exit(-1);
+            }
+
+            /* Cerco le occorrenze alfabetiche */
+            /* Lettura di ciascun carattere del file */
+            char ch;
+            long int occur = 0;
+            while(read(fd, &ch, 1)){
+                if (isdigit(ch))
+                {
+                    occur++;
+                    /* Eseguo la trasformazione in spazio */
+                    ch = ' ';
+                    lseek(fd, -1L, SEEK_CUR);
+                    write(fd, &ch, 1);
+                }
+            }
+
+            /* Scrivo le occorrenze sulla pipe */
+            write(pipedFigli[i][1], &occur, sizeof(long int));
+
+            /* Aspetto il nipote */
+            int pidNipote;
+            ritorno = -1;
+            if ((pidNipote = wait(&status)) < 0)
+            {
+                printf("Errore del figlio in wait.\n");
+            }
+            if ((status & 0xFF) != 0)
+            {
+                printf("Processo nipote %d terminato in modo anomalo.\n", pidNipote);
+            }
+            else
+            {
+                ritorno = (int)(occur / 256L);
+                printf("Il processo nipote %d ha ritornato %d.\n", pidNipote, ritorno);
+            }
+
+            exit(ritorno);
         }
     }
 
@@ -133,8 +193,37 @@ int main(int argc, char** argv)
         close(pipedFigli[i][1]);
         close(pipedNipoti[i][1]);
     }
+
+    /* Raccolgo i dati dalle pipe e li stampo su stdout seguiti da relative informazioni */
+    for (i = 0; i < N; i++)
+    {
+        int figlioOccur, nipoteOccur;
+        read(pipedFigli[i][0], &figlioOccur, sizeof(long int));
+        read(pipedFigli[i][0], &nipoteOccur, sizeof(long int));
+
+        printf("Il figlio di indice %d ha effettuato %ld trasformazioni sul file %s.\n", i, figlioOccur, argv[i + 1]);
+        printf("Il nipote corrispondente ha effettuato %ld trasformazioni sul file %s.\n", i, nipoteOccur, argv[i + 1]);
+    }
     
-    
+    /* Aspetto i figli */
+    int pidFiglio;
+    for (i = 0; i < N; i++)
+    {
+        if ((pidFiglio = wait(&status)) < 0)
+        {
+            printf("Errore del padre in wait.\n");
+            exit(5);
+        }
+        if ((status & 0xFF) != 0)
+        {
+            printf("Processo figlio %d terminato in modo anomalo.\n", pidFiglio);
+        }
+        else
+        {
+            ritorno = (int)((status >> 8) & 0xFF);
+            printf("Il processo figlio %d ha ritornato %d.\n", pidFiglio, ritorno);
+        }
+    }
     
     exit(0);
 }
