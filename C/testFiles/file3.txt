@@ -1,3 +1,5 @@
 prima riga
 seconda rigazza
 rigaz
+00000000000
+OOP -> MANAZZA(Z)

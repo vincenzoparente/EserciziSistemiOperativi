@@ -1,4 +1,4 @@
-primalez riga
-riga 
-source
-drain
+PRIMALEZ RIG 
+RIG 
+S URCE
+DR  N

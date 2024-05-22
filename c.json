@@ -90,7 +90,7 @@
         "prefix": "t-pipe: multiple piping (dynamic)",
         "body": [
             "/* Creo un vettore di pipe */",
-            "pipe_t* ${1:piped} = (pipe_t)malloc(${2:N} * sizeof(pipe_t));",
+            "pipe_t* ${1:piped} = (pipe_t*)malloc(${2:N} * sizeof(pipe_t));",
             "",
             "/* Creo le pipe per consentire la comunicazione tra ${3:padre} e ${4:figli} */",
             "for (${5:i} = 0; ${5:i} < ${2:N}; ${5:i}++)",

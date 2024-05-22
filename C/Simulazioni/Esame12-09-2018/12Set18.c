@@ -31,6 +31,10 @@ int main(int argc, char** argv)
     
     /* Numero di parametri passati da linea di comando */
     N = argc - 1;
+    printf("%d\n", N);
+
+    pipedFigli = (pipe_t*)malloc(N * sizeof(pipe_t));
+    pipedNipoti = (pipe_t*)malloc(N * sizeof(pipe_t));
     
     /* Creo le pipe per consentire la comunicazione tra padre e figli verificando se l'operazione va a buon fine */
     for (i = 0; i < N; i++)
@@ -110,7 +114,7 @@ int main(int argc, char** argv)
                 char ch;
                 long int occur = 0;
                 while(read(fd, &ch, 1)){
-                    if (ch >= 'a' && ch <= 'z')
+                    if (islower(ch))
                     {
                         occur++;
                         /* Eseguo la trasformazione in carattere maiuscolo */
@@ -177,10 +181,11 @@ int main(int argc, char** argv)
             }
             else
             {
-                ritorno = (int)(occur / 256L);
+                ritorno = (int)((status >> 8) & 0xFF);
                 printf("Il processo nipote %d ha ritornato %d.\n", pidNipote, ritorno);
             }
 
+            ritorno = (int)(occur / 256L);
             exit(ritorno);
         }
     }
@@ -197,12 +202,12 @@ int main(int argc, char** argv)
     /* Raccolgo i dati dalle pipe e li stampo su stdout seguiti da relative informazioni */
     for (i = 0; i < N; i++)
     {
-        int figlioOccur, nipoteOccur;
+        long int figlioOccur, nipoteOccur;
         read(pipedFigli[i][0], &figlioOccur, sizeof(long int));
         read(pipedFigli[i][0], &nipoteOccur, sizeof(long int));
 
         printf("Il figlio di indice %d ha effettuato %ld trasformazioni sul file %s.\n", i, figlioOccur, argv[i + 1]);
-        printf("Il nipote corrispondente ha effettuato %ld trasformazioni sul file %s.\n", i, nipoteOccur, argv[i + 1]);
+        printf("Il nipote corrispondente ha effettuato %ld trasformazioni sul file %s.\n", nipoteOccur, argv[i + 1]);
     }
     
     /* Aspetto i figli */
