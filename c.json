@@ -40,7 +40,7 @@
             "int pid;\t\t\t\t/* process identifier per le fork() */",
             "int ${1:N};\t\t\t\t\t/* numero di file passati sulla riga di comando */",
             "int $2;\t\t\t\t/* indici per i cicli */", 
-            "pipe_t ${3:*piped};\t\t\t/* ${4:array dinamico di pipe descriptors} */$5",
+            "$3",
             "int status;\t\t\t\t/* variabile di stato per la wait */",
             "int ritorno;\t\t\t/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */",
             "",
@@ -96,7 +96,7 @@
             "\t/* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */",
             "\tprintf(\"Errore nel piping.\\n\");",
             "\texit(3);",
-            "\t}",
+            "}",
             "}"
         ]
     },
@@ -372,13 +372,13 @@
             "$0"
         ]
     },
-        "t-creat: createfile": {
+    "t-create: createfile": {
         "prefix": "t-creat: createfile",
         "body": [
             "/* Creazione del file ${1:NOMEFILE} */",
             "if((fdout = creat(\"${2:PATH}\", 0644)) < 0){",
             "\tprintf(\"Errore nella creazione del file\\n\");",
-            "exit(${3: });",
+            "\texit($3);",
             "}",
             "$0"
         ]
@@ -390,18 +390,20 @@
             "int ${1:j} = 0;",
             "while(read(fd, &(${2:linea}[${1:j}]), 1) != 0){",
             "\t/* Trovato il termine di una linea */",
-            "\tif(${2:linea}[${1:j}] == '\\n'){",
-            "",
-            "\t\t${3:/* Code */}",
-            "",
+            "\tif(${2:linea}[${1:j}] == '\\n')",
+            "\t{",
+            "\t\t$0",
+            "\t\t",
             "\t\t${1:j} = 0;",
             "\t}",
-            "\telse{",
+            "\telse",
+            "\t{",
             "\t\t/* Aggiornamento indice */",
             "\t\t${1:j}++;",
             "\t}",
             "}",
-            "$0"
+            "",
+            ""
         ]
     },
     "t-read: readchar": {
@@ -411,18 +413,20 @@
             "int ${1:j} = 0;",
             "while(read(fd, &${2:ch}, 1) != 0){",
             "\t/* Trovato il termine di una linea */",
-            "\tif(${2:ch} == '\\n'){",
-            "",
-            "\t\t${3:/* Code */}",
-            "",
+            "\tif(${2:ch} == '\\n')",
+            "\t{",
+            "\t\t$0",
+            "\t\t",
             "\t\t${1:j} = 0;",
             "\t}",
-            "\telse{",
+            "\telse",
+            "\t{",
             "\t\t/* Aggiornamento indice */",
             "\t\t${1:j}++;",
             "\t}",
             "}",
-            "$0"
+            "",
+            ""
         ]
     },
     "t-shell": {
