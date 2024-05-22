@@ -55,6 +55,86 @@ int main(int argc, char** argv)
             exit(4);
         }
     }
+
+    /* Creo le N fork */
+    for (i = 0; i < N; i++)
+    {
+        /* Genero un processo figlio */
+        /* Controllo che la fork() abbia successo */
+        if ((pid = fork()) < 0)
+        {
+            /* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */
+            printf("Errore nella fork.\n");
+            exit(4);
+        }
+        
+        /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del figlio */
+        if (pid == 0)
+        {
+            /* Codice del figlio */
+            printf("DEBUG-Esecuzione del processo figlio %d\n", getpid());
+            
+            /* Genero un processo nipote */
+            /* Controllo che la fork() abbia successo */
+            if ((pid = fork()) < 0)
+            {
+                /* La fork() ha fallito, dunque stampo un messaggio d'errore e ritorno un valore intero d'errore */
+                printf("Errore nella fork.\n");
+                exit(4);
+            }
+            
+            /* Se pid == 0, allora la fork() ha avuto successo e possiamo eseguire il codice del nipote */
+            if (pid == 0)
+            {
+                /* Codice del nipote */
+                printf("DEBUG-Esecuzione del processo nipote %d\n", getpid());
+                
+                /* Chiudo i file descriptors non necessari */
+                for (j = 0; j < N; j++)
+                {
+                    close(pipedNipoti[j][0]);
+                    if (j != i)
+                    {
+                        close(pipedNipoti[j][1]);
+                    }
+                    close(pipedFigli[j][0]);
+                    close(pipedFigli[j][1]);
+                }
+
+                /* Apertura del file e controllo esistenza */
+                int fd;
+                if((fd = open(argv[i+1], O_RDONLY)) < 0){
+                    printf("Errore nell'apertura del file '%s'.\n", argv[i+1]);
+                    exit(-1);
+                }
+                
+                
+            }
+
+            /* Chiudo i file descriptors non necessari */
+            for (j = 0; j < N; j++)
+            {
+                close(pipedFigli[j][0]);
+                if (j != i)
+                {
+                    close(pipedFigli[j][1]);
+                }
+                close(pipedNipoti[j][0]);
+                close(pipedNipoti[j][1]);
+            }
+        }
+    }
+
+    /* Codice del padre */
+
+    /* Chiudo i lati di pipe inutilizzati */
+    for ( i = 0; i < N; i++)
+    {
+        close(pipedFigli[i][1]);
+        close(pipedNipoti[i][1]);
+    }
+    
+    
     
     exit(0);
 }
