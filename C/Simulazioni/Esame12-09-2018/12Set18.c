@@ -117,7 +117,8 @@ int main(int argc, char** argv)
                 /* Lettura di ciascun carattere del file */
                 char ch;
                 long int occur = 0;
-                while(read(fd, &ch, 1)){
+                while(read(fd, &ch, 1))
+                {
                     if (islower(ch))
                     {
                         occur++;
