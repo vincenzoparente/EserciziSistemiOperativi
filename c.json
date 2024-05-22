@@ -236,7 +236,7 @@
     "t-close: unused file (single)": {
         "prefix": "t-close: closing unused file (single)",
         "body": [
-            "/* Chiudo il file ${1:file} perche' inutilizzato */",
+            "/* Chiudo il file descriptor inutilizzato */",
             "close(${1:file});",
             "",
             "$0"
@@ -245,10 +245,9 @@
     "t-close: unused files (multiple)": {
         "prefix": "t-close: closing unused files (multiple)",
         "body": [
-            "/* Chiudo i ${1:file} perche' inutilizzati */",
-            "for (j = 0; j < ${2:N}; j++)",
+            "/* Chiudo i file descriptors non necessari */",
+            "for (${1:j} = 0; ${1:j} < ${2:N}; ${1:j}++)",
             "{",
-            "\tclose(${1:file});",
             "\t$0",
             "}",
             "",
@@ -283,6 +282,16 @@
             "",
             "/* Chiudo il lato della pipe che ho appena duplicato */",
             "close(${2:file});",
+            "",
+            "$0"
+        ]
+    },
+    "t-redirection: stderr on null": {
+        "prefix": "t-redirection: stderr on null",
+        "body": [
+            "/* Per evitare messaggi d'errore ridirigo stderr su /dev/null */",
+            "close(2);",
+            "open(\"/dev/null\", O_WRONLY);",
             "",
             "$0"
         ]
@@ -426,6 +435,42 @@
             "\t}",
             "}",
             "",
+            ""
+        ]
+    },
+    "t-bubblesort": {
+        "prefix": "t-bubblesort",
+        "body": [
+            "void bubbleSort(${1:int} v[], int dim)",
+            "{",
+            "\tint i;",
+            "\tbool ordinato = false;",
+            "\twhile (dim > 1 && !ordinato)",
+            "\t{",
+            "\t\tordinato = true;",
+            "\t\tfor (i = 0; i < dim - 1; i++)",
+            "\t\t{",
+            "\t\t\tif (v[i].v2 > v[i + 1].v2)",
+            "\t\t\t{",
+            "\t\t\t\tscambia(&v[i], &v[i+1]);",
+            "\t\t\t\tordinato = false;",
+            "\t\t\t}",
+            "\t\t}",
+            "\t\tdim--;",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    "t-swap": {
+        "prefix": "t-swap",
+        "body": [
+            "void scambia(${1:int}* a, ${1:int}* b)",
+            "{",
+            "\t${1:int} tmp = *a;",
+            "\t*a = *b;",
+            "\t*b = tmp;",
+            "}",
             ""
         ]
     },
