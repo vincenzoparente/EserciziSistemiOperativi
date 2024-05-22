@@ -259,6 +259,8 @@
             "\tprintf(\"DEBUG-Esecuzione del processo ${1:figlio} %d\\n\", getpid());",
             "\t",
             "\t$0",
+            "\t",
+            "\texit($5);",
             "}",
             "",
             "/* Codice del ${3:padre} */",
