@@ -23,15 +23,17 @@ int main(int argc, char** argv)
     
     int pid;				/* process identifier per le fork() */
     int N;					/* numero di file passati sulla riga di comando */
-    unsigned int H;         /* numero intero positivo */
+    int H;                  /* numero intero positivo */
     int i,j;				/* indici per i cicli */
-    int fd;                 /* fd per /tmp/creato */
+    int tmp;                /* fd per /tmp/creato */
+    pipe_t* pipedFP;        /* pipe per comunicazione figlio -> padre */
+    pipe_t* pipedPF;        /* pipe per comunicazione padre -> figlio */
+    int fd;                 /* fd per i file da cui leggere */
     char linea[255];        /* linea letta */
     int lunghezzaLinea;     /* lunghezza della linea letta */
     int rndNum;             /* numero random generato */
-    int numeroScritti;      /* numero dei caratteri scritti sul file temporaneo */
     int status;				/* variabile di stato per la wait */
-    int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
+    int ritorno = 0;		/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
     
     /* -------------------------------------------- */
     
@@ -43,73 +45,50 @@ int main(int argc, char** argv)
     
     /* Numero di parametri passati da linea di comando */
     N = argc - 2;
-    
-    /* Controllo che il numero sia un intero positivo */
-    for (i = 0; i < strlen(argv[argc - 1]); i++)
-    {
-        /* Se anche solo un carattere non è un numero intero, allora sono incorso in un errore */
-        if (!isdigit(argv[argc - 1][i]))
-        {
-            printf("Errore: il parametro %s non e' un numero intero positivo.\n", argv[argc - 1]);
-            exit(2);
-        }
-    }
 
     /* Assegno il numero trovato e controllo che sia minore di 255 */
     H = atoi(argv[argc - 1]);
-    if (H >= 255)
+    if ((H <= 0) || (H >= 255))
     {
         printf("Errore: %d e' maggiore o uguale a 255.\n", H);
-        exit(3);
+        exit(2);
     }
 
     /* Inizializzazione del randomizer */
     srand(time(NULL));
 
     /* Creazione del file /tmp/creato */
-    if ((fd = open("/tmp/creato", O_CREAT | O_WRONLY | O_TRUNC, 0644)) < 0)
+    if ((tmp = open("/tmp/creato", O_CREAT | O_WRONLY | O_TRUNC, 0644)) < 0)
     {
         printf("Errore nella creazione di /tmp/creato.\n");
-        exit(4);
+        exit(3);
     }
     
-    /* Creo un vettore di pipe */
-    pipe_t* pipedFP = (pipe_t*)malloc(N * sizeof(pipe_t));
-    if (pipedFP == NULL)
+    /* Creo due vettori di pipe */
+    pipedFP = (pipe_t*)malloc(N * sizeof(pipe_t));
+    pipedPF = (pipe_t*)malloc(N * sizeof(pipe_t));
+    if ((pipedFP == NULL) || (pipedPF == NULL))
     {
         printf("Errore nell'allocazione della memoria per la pipe padre-figli.\n");
-        exit(5);
+        exit(4);
     }
 
     /* Creo le pipe per consentire la comunicazione tra padre e figli */
     for (i = 0; i < N; i++)
     {
-        /* Creazione della pipe */
+        /* Creazione della pipeFP */
         if (pipe(pipedFP[i]) < 0)
         {
             /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
             printf("Errore nel piping.\n");
-            exit(6);
+            exit(5);
         }
-    }
-
-    /* Creo un vettore di pipe */
-    pipe_t* pipedPF = (pipe_t*)malloc(N * sizeof(pipe_t));
-    if (pipedPF == NULL)
-    {
-        printf("Errore nell'allocazione della memoria per la pipe padre-figli.\n");
-        exit(9);
-    }
-    
-    /* Creo le pipe per consentire la comunicazione tra padre e figli */
-    for (i = 0; i < N; i++)
-    {
-        /* Creazione della pipe */
+        /* Creazione della pipePF */
         if (pipe(pipedPF[i]) < 0)
         {
             /* La creazione della pipe ha fallito, stampo un messaggio d'errore ed esco specificando un valore intero d'errore */
             printf("Errore nel piping.\n");
-            exit(10);
+            exit(6);
         }
     }
     
@@ -137,13 +116,12 @@ int main(int argc, char** argv)
                 close(pipedPF[j][1]);
                 if (j != i)
                 {
-                    close(pipedPF[j][0]);
                     close(pipedFP[j][1]);
+                    close(pipedPF[j][0]);
                 }
             }
 
             /* Apertura del file*/
-            int fd;
             if ((fd = open(argv[i+1], O_RDONLY)) < 0){
                 printf("Errore nell'apertura del file '%s'.\n", argv[i+1]);
                 exit(-1);
@@ -151,31 +129,23 @@ int main(int argc, char** argv)
             
             /* Lettura di ciascun carattere del file linea */
             j = 0;
-            numeroScritti = 0;
             while(read(fd, &(linea[j]), 1) != 0)
             {
                 /* Trovato il termine di una linea */
                 if (linea[j] == '\n')
                 {
-                    /* Scrivo la lunghezza della linea sulla pipe */
+                    /* Comprendo il terminatore \n */
                     lunghezzaLinea = j + 1;
-                    if (write(pipedFP[i][1], &lunghezzaLinea, sizeof(int)) == 0)
-                    {
-                        printf("Errore: fallita la write della lunghezza della linea sulla pipe.\n");
-                        exit(-1);
-                    }
+                    /* Scrivo la lunghezza della linea sulla pipe */
+                    write(pipedFP[i][1], &lunghezzaLinea, sizeof(lunghezzaLinea));
 
                     /* Leggo il numero random */
-                    if (read(pipedPF[i][0], &rndNum, sizeof(int)) == 0)
-                    {
-                        printf("Errore: fallita la read del valore random comunicato dal padre al figlio.\n");
-                        exit(-1);
-                    }
+                    read(pipedPF[i][0], &rndNum, sizeof(rndNum));
 
-                    if (rndNum < (strlen(linea) - 1))
+                    if (rndNum < lunghezzaLinea)
                     {
-                        write(fd, &(linea[rndNum]), 1);
-                        numeroScritti++;
+                        write(tmp, &(linea[rndNum]), 1);
+                        ritorno++;
                     }
                     
                     /* Riparto da 0 per ricominciare a contare la linea successiva */
@@ -188,7 +158,7 @@ int main(int argc, char** argv)
                 }
             }
             
-            exit(numeroScritti);
+            exit(ritorno);
         }
     }
 
@@ -199,21 +169,28 @@ int main(int argc, char** argv)
     {
         close(pipedFP[i][1]);
         close(pipedPF[i][0]);
-    }
+    }         
 
-    /* Lunghezze delle righe di ogni file */
-    int* lunghezze = (int*)malloc(N * sizeof(int));          
-
-    for (i = 0; i <= H; i ++)
+    int lunghezzaLetta;
+    int valoreCorretto;
+    for (i = 1; i <= H; i ++)
     {
-        /* Leggo la lunghezza dal figlio */
+        /* Calcolo un indice per scegliere una lunghezza a caso tra quelle lette */
+        rndNum = mia_random(N);
+
+        /* Leggo la lunghezza dal figlio d'indice rndNum*/
         for (j = 0; j < N; j++)
         {
-            read(pipedFP[j][0], &lunghezze[j], sizeof(int));
+            read(pipedFP[j][0], &lunghezzaLetta, sizeof(int));
+            if (i == rndNum)
+            {
+                /* Ho letto la lunghezza che corrisponde all'indice randomico calcolato, quindi interrompo il ciclo */
+                valoreCorretto = lunghezzaLetta;
+            }
         }
 
-        /* Calcolo il numero random */
-        rndNum = mia_random(N);
+        /* Calcolo l'indice random da mandare ai figli */
+        rndNum = mia_random(valoreCorretto);
 
         for (j = 0; j < N; j++)
         {

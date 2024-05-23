@@ -1,5 +1,4 @@
 PRIMA RIGA
 SECONDA RIGAZZA
 RIGAZ
-           
-OOP -> MANAZZA(Z)
+ciao

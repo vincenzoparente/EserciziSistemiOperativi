@@ -1,9 +1,7 @@
 {
-  "t-includes":
-  {
+  "t-includes": {
     "prefix": "t-includes",
-    "body":
-    [
+    "body": [
       "#include <stdlib.h>",
       "#include <stdio.h>",
       "#include <string.h>",
@@ -17,11 +15,9 @@
       "$0"
     ]
   },
-  "t-main":
-  {
+  "t-main": {
     "prefix": "t-main",
-    "body":
-    [
+    "body": [
       "int main(int argc, char** argv)",
       "{",
       "\t$0",
@@ -30,20 +26,16 @@
       "}"
     ]
   },
-  "t-comment":
-  {
+  "t-comment": {
     "prefix": "t-comment",
-    "body":
-    [
+    "body": [
       "/* $1 */",
       "$0"
     ]
   },
-  "t-variables: local variables":
-  {
+  "t-variables: local variables": {
     "prefix": "t-variables: local variables",
-    "body":
-    [
+    "body": [
       "/* ------------- Variabili locali ------------- */",
       "",
       "int pid;\t\t\t\t/* process identifier per le fork() */",
@@ -58,11 +50,9 @@
       "$0"
     ]
   },
-  "t-control: parameters":
-  {
+  "t-control: parameters": {
     "prefix": "t-control: parameters",
-    "body":
-    [
+    "body": [
       "/* Controllo se il numero di parametri passati da linea di comando è corretto */",
       "if (argc ${1:<} ${2:n})",
       "{",
@@ -76,21 +66,17 @@
       "$0"
     ]
   },
-  "t-pipe: typedef pipe_t":
-  {
+  "t-pipe: typedef pipe_t": {
     "prefix": "t-pipe: pipe_t",
-    "body":
-    [
+    "body": [
       "typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */",
       "",
       "$0"
     ]
   },
-  "t-pipe: single piping":
-  {
+  "t-pipe: single piping": {
     "prefix": "t-pipe: single piping",
-    "body":
-    [
+    "body": [
       "/* Creo una pipe per consentire la comunicazione tra ${1:padre} e ${2:figlio} */",
       "if (pipe(${3:piped}) < 0)",
       "{",
@@ -102,11 +88,9 @@
       "$0"
     ]
   },
-  "t-pipe: multiple piping (dynamic array)":
-  {
+  "t-pipe: multiple piping (dynamic array)": {
     "prefix": "t-pipe: multiple piping (dynamic)",
-    "body":
-    [
+    "body": [
       "/* Creo un vettore di pipe */",
       "pipe_t* ${1:piped} = (pipe_t*)malloc(${2:N} * sizeof(pipe_t));",
       "if (${1:piped} == NULL)",
@@ -130,11 +114,9 @@
       "$0"
     ]
   },
-  "t-pipe: multiple piping (static array)":
-  {
+  "t-pipe: multiple piping (static array)": {
     "prefix": "t-pipe: multiple piping (static)",
-    "body":
-    [
+    "body": [
       "/* Dichiaro un array di pipe */",
       "pipe_t ${1:piped}[${2:N}];",
       "",
@@ -153,11 +135,9 @@
       "$0"
     ]
   },
-  "t-fork":
-  {
+  "t-fork": {
     "prefix": "t-fork",
-    "body":
-    [
+    "body": [
       "/* Genero un processo ${1:figlio} */",
       "/* Controllo che la fork() abbia successo */",
       "if ((pid = fork()) < 0)",
@@ -183,22 +163,18 @@
       ""
     ]
   },
-  "t-close: unused file (single)":
-  {
+  "t-close: unused file (single)": {
     "prefix": "t-close: closing unused file (single)",
-    "body":
-    [
+    "body": [
       "/* Chiudo il file descriptor inutilizzato */",
       "close(${1:file});",
       "",
       "$0"
     ]
   },
-  "t-close: unused files (multiple)":
-  {
+  "t-close: unused files (multiple)": {
     "prefix": "t-close: closing unused files (multiple)",
-    "body":
-    [
+    "body": [
       "/* Chiudo i file descriptors non necessari */",
       "for (${1:j} = 0; ${1:j} < ${2:N}; ${1:j}++)",
       "{",
@@ -208,11 +184,9 @@
       ""
     ]
   },
-  "t-redirection: on existent file":
-  {
+  "t-redirection: on existent file": {
     "prefix": "t-redirection: on existent file",
-    "body":
-    [
+    "body": [
       "/* Ridirigo ${1:stdout} su ${2:file} */",
       "close(${3:1});",
       "dup(${2:file});",
@@ -223,11 +197,9 @@
       "$0"
     ]
   },
-  "t-redirection: on unexistent file":
-  {
+  "t-redirection: on unexistent file": {
     "prefix": "t-redirection: on unexistent file",
-    "body":
-    [
+    "body": [
       "/* Ridirigo ${1:stdout} su ${2:file} */",
       "close(${3:1});",
       "int ${4:fd};",
@@ -244,11 +216,9 @@
       "$0"
     ]
   },
-  "t-redirection: stderr on null":
-  {
+  "t-redirection: stderr on null": {
     "prefix": "t-redirection: stderr on null",
-    "body":
-    [
+    "body": [
       "/* Per evitare messaggi d'errore ridirigo stderr su /dev/null */",
       "close(2);",
       "open(\"/dev/null\", O_WRONLY);",
@@ -256,11 +226,9 @@
       "$0"
     ]
   },
-  "t-wait: son-grandson":
-  {
+  "t-wait: son-grandson": {
     "prefix": "t-wait: son-grandson",
-    "body":
-    [
+    "body": [
       "/* Aspetto il nipote */",
       "int ${1:pidNipote};",
       "ritorno = -1;",
@@ -281,11 +249,9 @@
       "exit(ritorno);"
     ]
   },
-  "t-wait: father-son (single)":
-  {
+  "t-wait: father-son (single)": {
     "prefix": "t-wait: father-son (single)",
-    "body":
-    [
+    "body": [
       "/* Aspetto il figlio */",
       "int ${1:pidFiglio};",
       "if ((${1:pidFiglio} = wait(&status)) < 0)",
@@ -305,11 +271,9 @@
       ""
     ]
   },
-  "t-wait: father-son (multiple)":
-  {
+  "t-wait: father-son (multiple)": {
     "prefix": "t-wait: father-son (multiple)",
-    "body":
-    [
+    "body": [
       "/* Aspetto i figli */",
       "int ${1:pidFiglio};",
       "for (i = 0; i < ${2:N}; i++)",
@@ -332,11 +296,9 @@
       ""
     ]
   },
-  "t-open: openfile":
-  {
+  "t-open: openfile": {
     "prefix": "t-open: openfile",
-    "body":
-    [
+    "body": [
       "/* Apertura del file*/",
       "int fd;",
       "if((fd = open(${1:argv[n+1]}, ${2:O_RDONLY})) < 0){",
@@ -346,22 +308,18 @@
       "$0"
     ]
   },
-  "t-exec: exec-fail":
-  {
+  "t-exec: exec-fail": {
     "prefix": "t-exec: exec-fail",
-    "body":
-    [
+    "body": [
       "/* Codice che viene eseguito solo in caso di fallimento della exec */",
       "printf(\"Errore in exec!\\n\");",
       "exit(-1);",
       "$0"
     ]
   },
-  "t-create: createfile":
-  {
+  "t-create: createfile": {
     "prefix": "t-creat: createfile",
-    "body":
-    [
+    "body": [
       "/* Creazione del file ${1:NOMEFILE} */",
       "if((fdout = creat(\"${2:PATH}\", 0644)) < 0)",
       "{",
@@ -372,11 +330,9 @@
       "$0"
     ]
   },
-  "t-read: readline":
-  {
+  "t-read: readline": {
     "prefix": "t-read: readline",
-    "body":
-    [
+    "body": [
       "/* Lettura di ciascun carattere del file linea */",
       "int ${1:j} = 0;",
       "while(read(fd, &(${2:linea}[${1:j}]), 1) != 0)",
@@ -398,11 +354,9 @@
       ""
     ]
   },
-  "t-read: readchar":
-  {
+  "t-read: readchar": {
     "prefix": "t-read: readchar",
-    "body":
-    [
+    "body": [
       "/* Lettura di ciascun carattere del file */",
       "int ${1:j} = 0;",
       "while(read(fd, &${2:ch}, 1)){",
@@ -423,11 +377,9 @@
       ""
     ]
   },
-  "t-bubblesort":
-  {
+  "t-bubblesort": {
     "prefix": "t-bubblesort",
-    "body":
-    [
+    "body": [
       "void bubbleSort(${1:int} v[], int dim)",
       "{",
       "\tint i;",
@@ -449,11 +401,9 @@
       ""
     ]
   },
-  "t-swap":
-  {
+  "t-swap": {
     "prefix": "t-swap",
-    "body":
-    [
+    "body": [
       "void scambia(${1:int}* a, ${1:int}* b)",
       "{",
       "\t${1:int} tmp = *a;",
@@ -463,12 +413,10 @@
       ""
     ]
   },
-  "t-number: positive number":
-  {
+  "t-number: positive number": {
     "prefix": "t-number: positive number",
     "description": "t-number: positive number",
-    "body":
-    [
+    "body": [
       "/* Controllo che il numero sia un intero positivo */",
       "for (${1:i} = 0; ${1:i} < strlen(${2:argv[argc - 1]}); ${1:i}++)",
       "{",
@@ -483,12 +431,10 @@
       "$0"
     ]
   },
-  "t-random: random generator":
-  {
+  "t-random: random generator": {
     "prefix": "t-random: random generator",
     "description": "t-random: random generator",
-    "body":
-    [
+    "body": [
       "#include <time.h>",
       "",
       "int mia_random(int n)",
@@ -498,6 +444,34 @@
       "    return casuale;",
       "}",
       "${1:/* Ricordati di mettere srand(time(NULL)); all'inizio del main */}"
+    ]
+  },
+  "t-write": {
+    "prefix": "t-write",
+    "description": "t-write",
+    "body": [
+      "/* $1 */",
+      "if (write($2, $3, $4) == 0)",
+      "{",
+      "    printf(\"Errore: fallita la write $5.\\n\");",
+      "    exit($6);",
+      "}",
+      "",
+      "$0"
+    ]
+  },
+  "t-read": {
+    "prefix": "t-read",
+    "description": "t-read",
+    "body": [
+      "/* $1 */",
+      "if (read($2, $3, $4) == 0)",
+      "{",
+      "    printf(\"Errore: fallita la read $5.\\n\");",
+      "    exit($6);",
+      "}",
+      "",
+      "$0"
     ]
   }
 }
