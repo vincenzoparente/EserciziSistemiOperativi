@@ -790,3 +790,47 @@ int main(int argc, char**argv)
 ## Segnali
 
 Un metodo alternativo per la sincronizzazione in UNIX sono i segnali.
+
+Elenco dei segnali più comuni:
+
+```c
+SIGHUP 1        // hangup: disconnessione dal terminale (logout)
+SIGINT 2        // interrupt da terminale
+SIGQUIT 3       // quit da un programa con core
+SIGILL 4        // istruzione non consentita (core)
+...
+SIGKILL 9       // uccisione del processo non intercettabile o ignorabile
+...
+SIGSYS 12       // errore di argomento nella system call (core)
+SIGPIPE 13      // scrittura su pipe priva di lettore
+SIGALARM 14     // allarme da orologio
+SIGTERM 15      // terminazione software
+SIGUSR1 16      // user interrupt 1
+SIGUSR2 17      // user interrupt 2
+SIGCHLD 18      // morte di un processo figlio
+...
+```
+
+Dove `SIGUSR1` e `SIGUSR2` sono segnali lasciati all'utente.
+
+_Attenzione_: la numerazione di alcuni segnali potrebbe essere diversa!
+
+### Primitive
+
+La primitiva che consente di assegnare a un segnale un comportamento definito dal programmatore è la seguente:
+
+```c
+#include <signal.h>
+
+void* signal(int sig, void* func(int)) (int);
+```
+
+Dove `int sig` è il tipo di segnale e `void* func` è un puntatore alla funzione che determina come trattare il segnale. 
+
+Si hanno 3 possibilità nell'uso di questa funzione:
+
+1) Specificare l'indirizzo di un handler per il segnale `sig`. Al verificarsi di quest'ultimo viene invocato l'handler. Esso può eseguire qualsiasi operazione, dopodiché si ritornerà al processo interrotto oppure terminare l'esecuzione del processo.
+
+2) Riportare all'azione di default assegnando `SIG_DFL` al posto dell'handler.
+
+3) Ignorare il segnale assegnando `SIG_IGN` al posto dell'handler.
