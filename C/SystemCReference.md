@@ -14,44 +14,44 @@ L'implementazione della struttura dati è la seguente (nel file `tasks.h`):
 #define NR_TASKS 512
 
 struct task_struct {
-    // stato del processo  
+    // stato del processo
     volatile long state;
 
-    // identificatore del processo  
+    // identificatore del processo
     pid_t pid;
 
-    // used id, effective user id, saved user id  
+    // used id, effective user id, saved user id
     uid_t uid, euid, suid;
 
-    // group id, effective group id, saved group id  
+    // group id, effective group id, saved group id
     gid_t gid, egid, sgid;
 
-    // tempo di esecuzione in tick (priorità dinamica)  
+    // tempo di esecuzione in tick (priorità dinamica)
     long counter;
 
-    // priorità statica  
+    // priorità statica
     long priority;
 
-    // maschera dei segnali ricevuti non ancora serviti  
+    // maschera dei segnali ricevuti non ancora serviti
     int sigpending;
 
-    // codice di terminazione e segnale che ha causato la terminazione  
+    // codice di terminazione e segnale che ha causato la terminazione
     int exit_code, exit_signal;
 
-    // task seguente e precedente nella lista dei task  
+    // task seguente e precedente nella lista dei task
     struct task_struct *next_run;
     struct task_struct *prev_run;
 
-    // padre originale  
+    // padre originale
     struct task_struct *p_opptr;
 
-    // padre attuale  
+    // padre attuale
     struct task_struct *p_pptr;
 
-    // informazioni sui file aperti  
+    // informazioni sui file aperti
     struct files_struct *files;
 
-    // ...  
+    // ...
 }
 ```
 
@@ -61,11 +61,11 @@ La struttura dati presente in un descrittore di processo contiene, in particolar
 
 ```c
 struct files_struct {
-    // Maschera di bit di tutti i file descriptor usati (fino a 256)  
+    // Maschera di bit di tutti i file descriptor usati (fino a 256)
     fd_set open_fds;
-    // Array di file descriptor  
+    // Array di file descriptor
     struct file* fd[NR_OPEN];
-    // ...  
+    // ...
 };
 ```
 
@@ -73,17 +73,17 @@ Dove `NR_OPEN` è definito nella libreria `fs.h`. In quest'ultima è definita an
 
 ```c
 struct file {
-    // modalità di accesso (read only, read + write, write only)  
+    // modalità di accesso (read only, read + write, write only)
     mode_t f_mode;
-    // file pointer all'interno del file (64 bit -> file > 2 GB)  
+    // file pointer all'interno del file (64 bit -> file > 2 GB)
     loff_t f_pos;
-    // ulteriori flag di open  
+    // ulteriori flag di open
     unsigned short f_flags;
-    // contatore di riferimenti  
+    // contatore di riferimenti
     unsigned short f_count;
-    // puntatore alla copia degli i-node del file  
+    // puntatore alla copia degli i-node del file
     struct inode* f_inode;
-    // ...  
+    // ...
 };
 ```
 
@@ -91,55 +91,55 @@ Ed è definita in `fs.h` anche la struttura `inode`:
 
 ```c
 struct inode {
-    // descrizione del dispositvo (partizioine)  
+    // descrizione del dispositvo (partizioine)
     kdev_t i_dev;
-    // numero dell'inode all'interno del dispositivo  
+    // numero dell'inode all'interno del dispositivo
     unsigned long i_ino;
-    // diritti di accesso  
+    // diritti di accesso
     umode_t i_mode;
-    // numero di hard link  
+    // numero di hard link
     nlink_t i_nlink;
-    // user id e group id del proprietario  
+    // user id e group id del proprietario
     uid_t i_uid;
     gid_t i_gid;
-    // dimensione (in byte)  
+    // dimensione (in byte)
     off_t i_size;
-    // tempo di ultimo accesso, modifica, modifica dell'i-node  
+    // tempo di ultimo accesso, modifica, modifica dell'i-node
     time_t i_atime;
     time_t i_mtime;
     time_t i_ctime;
-    // ...  
-    // informazioni per lo specifico file system  
+    // ...
+    // informazioni per lo specifico file system
     union {
         struct minix_inode_info minix_i;
         struct ext_inode_info ext_i;
         struct ext2_inode_info ext2_i;
         struct hpfs_inode_info hpfs_i;
         struct msdos_inode_indo msdos_i;
-        // ...  
+        // ...
     } u;
-    // ...  
+    // ...
 };
 ```
 
 Prendendo in esame il file system ext2, in `Ext2_fs.h` troviamo:
 
 ```c
-// numero di blocchi indirizzati direttamente  
+// numero di blocchi indirizzati direttamente
 #define EXT2_NDIR_BLOCKS 12
 
-// indici dei puntatori ai blocchi che contengono indirizzi dei blocchi indiretti  
+// indici dei puntatori ai blocchi che contengono indirizzi dei blocchi indiretti
 #define EXT2_IND_BLOCK EXT2_NDIR_BLOCKS
 #define EXT2_DIND_BLOCK (EXT2_IND_BLOCK + 1)
 #define EXT2_DIND_BLOCK (EXT2_DIND_BLOCK + 1)
 
-// numero di elementi della tabella dei riferimenti ai blocchi  
+// numero di elementi della tabella dei riferimenti ai blocchi
 #define EXT2_N_BLOCKS (EXT2_TIND_BLOCK + 1)
 
 struct ext2_inode {
-    // indirizzi dei blocchi  
+    // indirizzi dei blocchi
     __u32 i_block[EXT2_N_BLOCKS];
-    // ...  
+    // ...
 };
 ```
 
@@ -169,12 +169,12 @@ Per eseguire una fork nel modo corretto la procedura di norma è la seguente:
 
 ```c
 if (fork() == 0) {
-    // codice eseguito dal figlio  
+    // codice eseguito dal figlio
 
-    // il figlio termina con il valore da ritornare al padre  
+    // il figlio termina con il valore da ritornare al padre
     exit(valore);
 }
-// codice eseguito dal padre  
+// codice eseguito dal padre
 exit(0);
 ```
 
@@ -201,17 +201,17 @@ Altri attributi importanti di un processo sono UID e GID sia reali che effettivi
 Ogni processo può conoscere i propri UID e GID usando rispettivamente le primitive `getuid()` e `getgid()`:
 
 ```c
-// UID reale  
+// UID reale
 int uid;
 uid = getuid();
-// UID effettivo  
+// UID effettivo
 int euid;
 euid = geteuid();
 
-// GID reale 
+// GID reale
 int gid;
 gid = getgid();
-// GID effettivo  
+// GID effettivo
 int egid;
 egid = getegid();
 ```
@@ -241,18 +241,18 @@ Caso 1:
 ```c
 if ((pid = fork()) < 0)
 {
-    // fork fallita  
+    // fork fallita
     printf("Errore in fork\n"); exit(1);
 }
 if (pid == 0)
 {
-    // codice eseguito dal figlio  
+    // codice eseguito dal figlio
     exit(valore);   // il figlio termina con uno specifico
-    valore che verrà ritornato al padre  
+    valore che verrà ritornato al padre
 }
-// codice eseguito dal padre  
+// codice eseguito dal padre
 pidfiglio = wait(&status);
-exit(0);    // terminazione del padre  
+exit(0);    // terminazione del padre
 ```
 
 Caso 2: se il valore restituito dalla exit non interessa:
@@ -260,18 +260,18 @@ Caso 2: se il valore restituito dalla exit non interessa:
 ```c
 if ((pid = fork()) < 0)
 {
-    // fork fallita  
+    // fork fallita
     printf("Errore in fork\n"); exit(1);
 }
 if (pid == 0)
 {
-    // codice eseguito dal figlio  
+    // codice eseguito dal figlio
     exit(valore);   // il figlio termina con uno specifico
-    valore che verrà ritornato al padre  
+    valore che verrà ritornato al padre
 }
-// codice eseguito dal padre  
-pidfiglio = wait((int *) 0);    // viene ignorato il valore di status  
-exit(0);    // terminazione del padre  
+// codice eseguito dal padre
+pidfiglio = wait((int *) 0);    // viene ignorato il valore di status
+exit(0);    // terminazione del padre
 ```
 
 _Attenzione_: è possibile ignorare il valore di ritorno della wait.
@@ -315,18 +315,18 @@ int main()
 {
     if ((pid = fork()) < 0)
     {
-        // fork fallita  
+        // fork fallita
         printf("Errore in fork\n"); exit(1);
     }
     if (pid == 0)
     {
-        // figlio  
+        // figlio
         printf("Esecuzione del figlio\n");
         sleep(4);
         exit(5);    // valore di ritorno che dovrebbe essere scelto
-        in base al comportamento del codice eseguito dal figlio  
+        in base al comportamento del codice eseguito dal figlio
     }
-    // padre  
+    // padre
     if (wait(&status) < 0)
     {
         printf("Errore in wait\n");
@@ -339,7 +339,7 @@ int main()
     else
     {
         ritorno = status >> 8;
-        // selezione degli 8 bit più significativi  
+        // selezione degli 8 bit più significativi
         ritorno &= 0xFF;
         printf("Per il figlio %d lo stato di EXIT è %d\n", pid, ritorno);
     }
@@ -427,7 +427,7 @@ int main()
     exit(1);
 }
 
-// file myecho.c  
+// file myecho.c
 int main(int argc, char **argv)
 {
     int i;
@@ -464,20 +464,20 @@ int main()
     pid = fork();
     if (pid < 0)
     {
-        // fork fallita  
+        // fork fallita
         printf("Errore in fork\n");
         exit(1);
     }
 
     if (pid == 0)
     {
-        // figlio  
+        // figlio
         printf("Esecuzione di ls\n");
         execl("/bin/ls", "ls", "-l", (char *)0);
         printf("Errore in execl\n");
-        exit(-1);   // valore che deve essere concordato con il padre  
+        exit(-1);   // valore che deve essere concordato con il padre
     }
-    // padre  
+    // padre
     wait((int *)0);
     printf("Terminato ls\n");
     exit(0);
@@ -502,25 +502,25 @@ int main(int argc, char **argv)
     int pid, pidfiglio, status, ritorno;
     char st[80];
 
-    // ciclo infinito  
+    // ciclo infinito
     for (;;)
     {
         printf("Inserire il comando da eseguire:\n");
-        scanf("%s", st); // N.B. legge una singola stringa  
-        // una volta ricevuto un comando si delega un figlio per eseguirlo  
+        scanf("%s", st); // N.B. legge una singola stringa
+        // una volta ricevuto un comando si delega un figlio per eseguirlo
         if ((pid = fork()) < 0)
         {
             perror("fork"); exit(1);
         }
         if (pid == 0)
         {
-            // FIGLIO: esegue i comandi  
+            // FIGLIO: esegue i comandi
             execlp(st, st, (char *)0);
             perror("Errore esecuzione comando");
             exit(errno);
         }
-        // PADRE  
-        // attesa figlio: esecuzione in foreground  
+        // PADRE
+        // attesa figlio: esecuzione in foreground
         if (pidfiglio = wait(&status) < 0)
         {
             perror("Errore wait");
@@ -528,12 +528,12 @@ int main(int argc, char **argv)
         }
         else
         {
-            // verifica la eventuale terminazione annormale del figlio; nel caso in cui invece sia normale, allora recupero il valore ritornato e lo stampo  
+            // verifica la eventuale terminazione annormale del figlio; nel caso in cui invece sia normale, allora recupero il valore ritornato e lo stampo
             printf("Eseguire altro comando? (si/no) \n");
             scanf("%s", st);
-            if (strcmp(st, "si")) exit(0); // uscita dal ciclo infinito  
-        }   // fine else  
-    } // fine for  
+            if (strcmp(st, "si")) exit(0); // uscita dal ciclo infinito
+        }   // fine else
+    } // fine for
 }
 ```
 
@@ -580,7 +580,7 @@ int main()
     }
     for (count = 0;;)
     {
-        write(piped[1], &c, 1); // scrittura sulla pipe  
+        write(piped[1], &c, 1); // scrittura sulla pipe
         if ((++count % 1024) == 0)
         {
             printf("%d caratteri nella pipe\n", count);
@@ -601,14 +601,14 @@ int main()
 {
     int pid, piped[2];
     char msg[] = "ciao";
-    pipe(piped);    // CREAZIONE PIPE: due elementi in più nella TFA del processo padre  
+    pipe(piped);    // CREAZIONE PIPE: due elementi in più nella TFA del processo padre
     if (pid = fork() == 0)
     {
-        // figlio: eredita per copia la TFA del padre oltre alla copia dell'array pd  
-        write(piped[1], msg, 5);    // figlio scrive sulla pipe  
+        // figlio: eredita per copia la TFA del padre oltre alla copia dell'array pd
+        write(piped[1], msg, 5);    // figlio scrive sulla pipe
         exit(0);
     }
-    // padre: legge dalla pipe  
+    // padre: legge dalla pipe
     read(piped[0], msg, 5);
     exit(0);
 }
@@ -625,23 +625,23 @@ Comportamento standard nel caso in cui il processo scrittore (figlio) venga term
 
 int main(int argc, char **argv)
 {
-    // ...  
+    // ...
     if (pid == 0)
     {
-        // figlio  
+        // figlio
         int fd;
-        close(piped[0]);    // figlio chiude il lato lettura  
+        close(piped[0]);    // figlio chiude il lato lettura
         printf("Figlio %d sta per iniziare a scrivere...");
-        // il figlio termina, dunque la pipe resta senza scrittore  
+        // il figlio termina, dunque la pipe resta senza scrittore
         exit(0);
     }
-    // padre  
-    close(piped[1]);    // padre chiude il lato scrittura  
+    // padre
+    close(piped[1]);    // padre chiude il lato scrittura
     while (read(piped[0], inpbuf, MSGSIZE))
     {
         if (j != 0)
         {
-            // operazioni da svolgere in caso il figlio abbia scritto qualcosa  
+            // operazioni da svolgere in caso il figlio abbia scritto qualcosa
         }
         else
         {
@@ -663,13 +663,13 @@ Comportamento standard nel caso in cui il processo lettore (padre) venga termina
 
 int main()
 {
-    // ...  
+    // ...
     if (pid == 0)
     {
-        // figlio  
+        // figlio
         int fd;
-        close(piped[0]);    // figlio chiude il lato lettura  
-        // ...apertura del file fd...  
+        close(piped[0]);    // figlio chiude il lato lettura
+        // ...apertura del file fd...
         printf("Figlio %d sta per iniziare a scrivere...");
         while (read(fd, mess, MSGSIZE))
         {
@@ -680,9 +680,9 @@ int main()
         printf("Figlio ha scritto %d messaggi sulla pipe\n", j);
         exit(0);
     }
-    // padre  
-    close(piped[1]);    // padre chiude il lato scrittura  
-    // il padre termina, quindi il figlio resta senza lettore  
+    // padre
+    close(piped[1]);    // padre chiude il lato scrittura
+    // il padre termina, quindi il figlio resta senza lettore
     exit(0);
 }
 ```
@@ -694,7 +694,7 @@ Il sistema in tal caso spedisce il segnale `SIGPIPE` al processo scrittore per a
 La primitiva `dup()` serve per duplicare un elemento della tabella dei file aperti di processo:
 
 ```c
-int fd;     // file descriptor del file da duplicare  
+int fd;     // file descriptor del file da duplicare
 int retval;
 retval = dup(fd);
 ```
@@ -717,9 +717,9 @@ int main(int argc, char**argv)
     int pid, piped[2];
     int pidfiglio, status, ritorno;
 
-    // processo P1: simulazione del processo shell  
-    // si devono fornire nella linea comandi due comandi distinti, separati dal carattere '!'. Non si usa direttamente '|' perché la shell lo interpreta direttamente nel suo linguaggio  
-    if (argc < 4)   // devono esserci almeno 3 stringhe  
+    // processo P1: simulazione del processo shell
+    // si devono fornire nella linea comandi due comandi distinti, separati dal carattere '!'. Non si usa direttamente '|' perché la shell lo interpreta direttamente nel suo linguaggio
+    if (argc < 4)   // devono esserci almeno 3 stringhe
     {
         printf("Errore nel numero di parametri");
         exit(1);
@@ -734,53 +734,53 @@ int main(int argc, char**argv)
     {
         com2[j - 1] = argv[i];
     }
-    com2[j - 1] = (char *)0;    // terminatore  
+    com2[j - 1] = (char *)0;    // terminatore
 
-    // creazione del figlio per eseguire il comando in pipe  
+    // creazione del figlio per eseguire il comando in pipe
     if ((pid = fork()) < 0)
     {
-        // errore...  
+        // errore...
     }
     if (pid == 0)
     {
-        // figlio = processo P2  
+        // figlio = processo P2
 
-        // il figlio P2 tratta il comando intero: crea la pipe  
+        // il figlio P2 tratta il comando intero: crea la pipe
         if (pipe(piped) < 0)
         {
             exit(-1);
         }
-        // creazione di un nuovo figlio = processo P3  
+        // creazione di un nuovo figlio = processo P3
         if ((pid = fork()) < 0)
         {
             exit(-1);
         }
         if (pid == 0)
         {
-            // processo P3 figlio di P2 figlio di P1  
-            close(1);           // l'output va messo sulla pipe, quindi posso chiudere stdout  
+            // processo P3 figlio di P2 figlio di P1
+            close(1);           // l'output va messo sulla pipe, quindi posso chiudere stdout
             dup(piped[1]);      // avendo chiuso con l'istruzione precedente stdout di indice 1, questa operazione di duplicazione del file
-                                // descriptor di piped[1] troverà sicuramente come prima posizione libera l'indice 1, 
-                                // quindi stdout è effettivamente stato sostituito da una copia del file descriptor di piped[1] 
+                                // descriptor di piped[1] troverà sicuramente come prima posizione libera l'indice 1,
+                                // quindi stdout è effettivamente stato sostituito da una copia del file descriptor di piped[1]
             close(piped[0]);
-            close(piped[1]);    // i lati pipe non servono più 
+            close(piped[1]);    // i lati pipe non servono più
             execvp(com1[0], com1);
-            exit(-1);           // errore in caso si ritorni qui dopo la exec  
+            exit(-1);           // errore in caso si ritorni qui dopo la exec
         }
-        // processo P2 (padre di P3)  
-        close(0);           // posso chiudere stdin perché l'input lo prendo dalla pipe  
-        dup(piped[0]);      // vale lo stesso ragionamento che è stato fatto in P3 riguardo piped[1] e stdout  
+        // processo P2 (padre di P3)
+        close(0);           // posso chiudere stdin perché l'input lo prendo dalla pipe
+        dup(piped[0]);      // vale lo stesso ragionamento che è stato fatto in P3 riguardo piped[1] e stdout
         close(piped[0]);
         close(piped[1]);
         execvp(com2[0], com2);
-        exit(-1);           // errore in caso si ritorni qui dopo la exec  
+        exit(-1);           // errore in caso si ritorni qui dopo la exec
     }
-    // processo P1 padre di P2  
+    // processo P1 padre di P2
     if ((pidfiglio = wait(&status)) < 0)
     {
-        // errore  
+        // errore
     }
-    // recupero del valore di ritorno  
+    // recupero del valore di ritorno
     exit(ritorno);
 }
 ```
@@ -803,7 +803,7 @@ SIGKILL 9       // uccisione del processo non intercettabile o ignorabile
 ...
 SIGSYS 12       // errore di argomento nella system call (core)
 SIGPIPE 13      // scrittura su pipe priva di lettore
-SIGALARM 14     // allarme da orologio
+SIGALRM 14      // scadenza di un timer
 SIGTERM 15      // terminazione software
 SIGUSR1 16      // user interrupt 1
 SIGUSR2 17      // user interrupt 2
@@ -825,12 +825,62 @@ La primitiva che consente di assegnare a un segnale un comportamento definito da
 void* signal(int sig, void* func(int)) (int);
 ```
 
-Dove `int sig` è il tipo di segnale e `void* func` è un puntatore alla funzione che determina come trattare il segnale. 
+Dove `int sig` è il tipo di segnale e `void* func` è un puntatore alla funzione che determina come trattare il segnale.
 
 Si hanno 3 possibilità nell'uso di questa funzione:
 
-1) Specificare l'indirizzo di un handler per il segnale `sig`. Al verificarsi di quest'ultimo viene invocato l'handler. Esso può eseguire qualsiasi operazione, dopodiché si ritornerà al processo interrotto oppure terminare l'esecuzione del processo.
+1. Specificare l'indirizzo di un handler per il segnale `sig`. Al verificarsi di quest'ultimo viene invocato l'handler. Esso può eseguire qualsiasi operazione, dopodiché si ritornerà al processo interrotto oppure terminare l'esecuzione del processo.
 
-2) Riportare all'azione di default assegnando `SIG_DFL` al posto dell'handler.
+2. Riportare all'azione di default assegnando `SIG_DFL` al posto dell'handler.
 
-3) Ignorare il segnale assegnando `SIG_IGN` al posto dell'handler.
+3. Ignorare il segnale assegnando `SIG_IGN` al posto dell'handler.
+
+### Invio dei segnali da un processo all'altro
+
+I processi possono inviare segnali ad altri processi con la primitiva `kill()`:
+
+```c
+int pid, sig;
+int retval = kill(pid, sig);
+```
+
+Dove `pid` specifica il processo destinatario del segnale e `sig` è il segnale da inviare. Il valore di ritorno è 0 in caso di successo oppure -1 in caso di insuccesso.
+\
+Questa primitiva spedisce il segnale `sig` al processo con il `pid` specificato.
+
+_Attenzione_: l'identificatore effettivo dell'utente che effettua la kill deve essere uguale a quello del processo a cui invia il segnale.
+
+Per sospendere un processo in attesa di un qualunque segnale si utilizza:
+
+```c
+int retval = pause();
+```
+
+_Attenzione_: questa primitiva non influisce sulla capacità di un processo di ricevere un segnale. Infatti, l'unica differenza sta nel fatto che, utilizzando `pause()` il processo rimane in sospensione fino alla ricezione di un segnale, mentre, se non venisse usata questa primitiva, allora procederebbe con le operazioni e riceverebbe un segnale durante la sua normale esecuzione. Risulta chiaro che questa pratica è sconveniente perché non si può determinare con precisione in che momento verrà ricevuto un segnale. L'incapacità di stabilire l'istante di tale ricezione risiede nello scheduler, che è fondamentalmente imprevedibile.
+
+Per sospendere un processo per un lasso di tempo determinato si utilizza:
+
+```c
+unsigned int secondi;
+unsigned int retval = sleep(secondi);
+```
+
+Se il processo viene risvegliato prematuramente ritorna:
+
+- 0 se la sospensione non è stata interrotta da segnali;
+- il tempo mancante al risveglio del processo.
+
+Per installare un timer si usa:
+
+```c
+unsigned int secondi;
+unsigned int retval = alarm(secondi);
+```
+
+Imposta un timer che, dopo che sono trascorsi `secondi`, invierà al processo stesso che ha utilizzato la funzione il segnale `SIGALRM`.
+Valori di ritorno:
+
+- 0 se non vi erano time-out impostati in precedenza;
+- il tempo mancante allo scandere del time-out precedente.
+
+_Attenzione_: l'azione di default associata a `SIGALRM` è la terminazione del processo.
