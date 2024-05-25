@@ -6,6 +6,17 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <signal.h>
+
+int recieved = 0;
+int i;
+
+void handler(int signo)
+{
+    printf("Processo figlio %d di indice %d. Segnale ricevuto: %d.\n", getpid(), i, signo);
+    /* Cambio valore alla variabile globale per segnalare ai figli l'arrivo del segnale */
+    recieved = 1;
+}
 
 typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */
 
@@ -15,7 +26,7 @@ int main(int argc, char** argv)
     
     int pid;				/* process identifier per le fork() */
     int N;					/* numero di file passati sulla riga di comando */
-    int i,j;				/* indici per i cicli */
+    int j;				    /* indici per i cicli */
     pipe_t* piped;          /* pipe per la comunicazione padre-figlio */
     char CF, CP;            /* rispettivamente, carattere letto dal figlio e carattere letto dal padre */
     int status;				/* variabile di stato per la wait */
@@ -52,6 +63,9 @@ int main(int argc, char** argv)
             exit(3);
         }
     }
+
+    /* Installo l'handler per il segnale che mi interessa */
+    signal(SIGUSR1, handler);
     
     /* Generazione degli N figli */
     for (i = 0; i < N; i++)
@@ -117,6 +131,11 @@ int main(int argc, char** argv)
             
             if (CF == CP)
             {
+                if (pause() != 0)
+                {
+                    printf("Errore in pause: il figlio %d di indice %d ha fallito nell'aspettare un segnale dal padre.\n", getpid(), i);
+                }
+
 
             }
         }

@@ -10,7 +10,7 @@
       "#include <sys/wait.h>",
       "#include <sys/stat.h>",
       "#include <ctype.h>",
-      "$1",
+      "#include <signal.h>",
       "",
       "$0"
     ]
