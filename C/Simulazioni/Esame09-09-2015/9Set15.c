@@ -8,14 +8,13 @@
 #include <ctype.h>
 #include <signal.h>
 
-int recieved = 0;
+/* Non è finito perché mi ha fatto arrabbiare grr grr */
+
 int i;
 
 void handler(int signo)
 {
     printf("Processo figlio %d di indice %d. Segnale ricevuto: %d.\n", getpid(), i, signo);
-    /* Cambio valore alla variabile globale per segnalare ai figli l'arrivo del segnale */
-    recieved = 1;
 }
 
 typedef int pipe_t[2];         /* definizione del TIPO pipe_t come array di 2 interi */

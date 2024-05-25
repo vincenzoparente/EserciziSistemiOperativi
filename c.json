@@ -11,6 +11,7 @@
       "#include <sys/stat.h>",
       "#include <ctype.h>",
       "#include <signal.h>",
+      "#include <stdbool.h>",
       "",
       "$0"
     ]
@@ -244,9 +245,7 @@
       "{",
       "\tritorno = (int)((status >> 8) & 0xFF);",
       "\tprintf(\"Il processo nipote %d ha ritornato %d.\\n\", ${1:pidNipote}, ritorno);",
-      "}",
-      "",
-      "exit(ritorno);"
+      "}"
     ]
   },
   "t-wait: father-son (single)": {
@@ -267,8 +266,7 @@
       "{",
       "\tritorno = (int)((status >> 8) & 0xFF);",
       "\tprintf(\"Il processo figlio %d ha ritornato %d.\\n\", ${1:pidFiglio}, ritorno);",
-      "}",
-      ""
+      "}"
     ]
   },
   "t-wait: father-son (multiple)": {
@@ -292,19 +290,18 @@
       "\t\tritorno = (int)((status >> 8) & 0xFF);",
       "\t\tprintf(\"Il processo figlio %d ha ritornato %d.\\n\", ${1:pidFiglio}, ritorno);",
       "\t}",
-      "}",
-      ""
+      "}"
     ]
   },
-  "t-open: openfile": {
-    "prefix": "t-open: openfile",
+  "t-open: open file": {
+    "prefix": "t-open: open file",
     "body": [
       "/* Apertura del file*/",
-      "int fd;",
-      "if((fd = open(${1:argv[n+1]}, ${2:O_RDONLY})) < 0){",
-      "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", ${1:argv[n+1]});",
+      "if ((fd = open(${1:argv[n + 1]}, ${2:O_RDONLY})) < 0){",
+      "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", ${1:argv[n + 1]});",
       "\texit($3);",
       "}",
+      "",
       "$0"
     ]
   },
@@ -317,28 +314,28 @@
       "$0"
     ]
   },
-  "t-create: createfile": {
-    "prefix": "t-creat: createfile",
+  "t-create: create file": {
+    "prefix": "t-creat: create file",
     "body": [
-      "/* Creazione del file ${1:NOMEFILE} */",
-      "if((fdout = creat(\"${2:PATH}\", 0644)) < 0)",
+      "/* Creazione del file ${1:filename} */",
+      "if ((fdout = creat(\"${1:filename}\", 0644)) < 0)",
       "{",
       "\tprintf(\"Errore nella creazione del file\\n\");",
-      "\texit($3);",
+      "\texit($2);",
       "}",
       "",
       "$0"
     ]
   },
-  "t-read: readline": {
-    "prefix": "t-read: readline",
+  "t-read: read line": {
+    "prefix": "t-read: read line",
     "body": [
       "/* Lettura di ciascun carattere del file linea */",
-      "int ${1:j} = 0;",
-      "while(read(fd, &(${2:linea}[${1:j}]), 1) != 0)",
+      "${1:j} = 0;",
+      "while (read(fd, &(${2:linea}[${1:j}]), 1) != 0)",
       "{",
       "\t/* Trovato il termine di una linea */",
-      "\tif(${2:linea}[${1:j}] == '\\n')",
+      "\tif (${2:linea}[${1:j}] == '\\n')",
       "\t{",
       "\t\t$0",
       "\t\t",
@@ -354,12 +351,13 @@
       ""
     ]
   },
-  "t-read: readchar": {
-    "prefix": "t-read: readchar",
+  "t-read: read char": {
+    "prefix": "t-read: read char",
     "body": [
       "/* Lettura di ciascun carattere del file */",
-      "int ${1:j} = 0;",
-      "while(read(fd, &${2:ch}, 1)){",
+      "${1:j} = 0;",
+      "while (read(fd, &${2:ch}, 1))",
+      "{",
       "\t/* Trovato il termine di una linea */",
       "\tif(${2:ch} == '\\n')",
       "\t{",
@@ -439,9 +437,9 @@
       "",
       "int mia_random(int n)",
       "{",
-      "    int casuale;",
-      "    casuale = rand() % n;",
-      "    return casuale;",
+      "\tint casuale;",
+      "\tcasuale = rand() % n;",
+      "\treturn casuale;",
       "}",
       "${1:/* Ricordati di mettere srand(time(NULL)); all'inizio del main */}"
     ]
@@ -450,11 +448,10 @@
     "prefix": "t-write",
     "description": "t-write",
     "body": [
-      "/* $1 */",
-      "if (write($2, $3, $4) == 0)",
+      "if (write($1, $2, $3) == 0)",
       "{",
-      "    printf(\"Errore: fallita la write $5.\\n\");",
-      "    exit($6);",
+      "\tprintf(\"Errore: fallita la write $4.\\n\");",
+      "\texit($5);",
       "}",
       "",
       "$0"
@@ -464,11 +461,10 @@
     "prefix": "t-read",
     "description": "t-read",
     "body": [
-      "/* $1 */",
-      "if (read($2, $3, $4) == 0)",
+      "if (read($1, $2, $3) == 0)",
       "{",
-      "    printf(\"Errore: fallita la read $5.\\n\");",
-      "    exit($6);",
+      "\tprintf(\"Errore: fallita la read $4.\\n\");",
+      "\texit($5);",
       "}",
       "",
       "$0"
