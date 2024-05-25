@@ -186,8 +186,6 @@ int main(int argc, char** argv)
         }
     }
     
-    
-    
     /* Aspetto i figli */
     int pidFiglio;
     for (i = 0; i < N; i++)
