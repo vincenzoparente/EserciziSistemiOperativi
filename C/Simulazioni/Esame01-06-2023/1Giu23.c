@@ -187,8 +187,6 @@ int main(int argc, char** argv)
         close(piped[j][1]);
     }
     
-    
-    
     for (n = 0; n < N; n++)
     {
         /* Leggo la struttura dati passata da ciascun figlio */
