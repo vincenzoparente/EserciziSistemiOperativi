@@ -93,7 +93,7 @@
     "prefix": "t-pipe: multiple piping (dynamic)",
     "body": [
       "/* Creo un vettore di pipe */",
-      "pipe_t* ${1:piped} = (pipe_t*)malloc(${2:N} * sizeof(pipe_t));",
+      "${1:piped} = (pipe_t*)malloc(${2:N} * sizeof(pipe_t));",
       "if (${1:piped} == NULL)",
       "{",
       "\tprintf(\"Errore nell'allocazione della memoria per la pipe ${3:padre}-${4:figli}\\n\");",
@@ -118,9 +118,6 @@
   "t-pipe: multiple piping (static array)": {
     "prefix": "t-pipe: multiple piping (static)",
     "body": [
-      "/* Dichiaro un array di pipe */",
-      "pipe_t ${1:piped}[${2:N}];",
-      "",
       "/* Creo le pipe per consentire la comunicazione tra ${3:padre} e ${4:figli} */",
       "for (${5:i} = 0; ${5:i} < ${2:N}; ${5:i}++)",
       "{",
@@ -297,7 +294,8 @@
     "prefix": "t-open: open file",
     "body": [
       "/* Apertura del file*/",
-      "if ((fd = open(${1:argv[n + 1]}, ${2:O_RDONLY})) < 0){",
+      "if ((fd = open(${1:argv[n + 1]}, ${2:O_RDONLY})) < 0)",
+      "{",
       "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", ${1:argv[n + 1]});",
       "\texit($3);",
       "}",
