@@ -27,7 +27,6 @@ int main(int argc, char** argv)
     Strut datiLetti;        /* struttura dati per raccogliere le informazioni */
     pipe_t* piped;          /* vettore di pipe per la comunicazione tra padre e figli */
     pipe_t pipedNipote;     /* pipe per la comunicazione tra figlio e nipote */
-    int fd;                 /* file descriptor del file del nipote */
     int status;				/* variabile di stato per la wait */
     int ritorno;			/* variabile usata dal padre per recuperare valore di ritorno di ogni figlio */
     
@@ -115,19 +114,6 @@ int main(int argc, char** argv)
 
                 close(piped[n][1]);
                 close(pipedNipote[0]);
-
-                /* Apertura del file*/
-                if ((fd = open(argv[n + 1], O_RDONLY)) < 0){
-                    printf("Errore nell'apertura del file '%s'.\n", argv[n + 1]);
-                    exit(-1);
-                }
-                
-                /* Ridirigo stdin su fd */
-                close(0);
-                dup(fd);
-                
-                /* Chiudo fd che ho appena duplicato, quindi non serve piu' */
-                close(fd);
                 
                 /* Ridirigo stdout su pipedNipote[1] */
                 close(1);
@@ -137,7 +123,7 @@ int main(int argc, char** argv)
                 close(pipedNipote[1]);
 
                 /* Eseguo il comando exec */
-                execlp("rev", "rev", (char*)0);
+                execlp("rev", "rev", argv[n + 1], (char*)0);
                 
                 /* Codice che viene eseguito solo in caso di fallimento della exec */
                 printf("Errore in exec!\n");
@@ -169,13 +155,39 @@ int main(int argc, char** argv)
                 }
             }
             
+            /* Scrivo i dati letti sulla pipe */
             write(piped[n][1], &datiLetti, sizeof(datiLetti));
+
+            /* Aspetto il nipote */
+            int pidNipote;
+            ritorno = -1;
+            if ((pidNipote = wait(&status)) < 0)
+            {
+                printf("Errore del figlio in wait.\n");
+            }
+            if ((status & 0xFF) != 0)
+            {
+                printf("Processo nipote %d terminato in modo anomalo.\n", pidNipote);
+            }
+            else
+            {
+                ritorno = (int)((status >> 8) & 0xFF);
+                printf("Il processo nipote %d ha ritornato %d.\n", pidNipote, ritorno);
+            }
             
             exit(datiLetti.c3 - 1);
         }
     }
 
     /* Codice del padre */
+
+    /* Chiudo i file descriptors non necessari */
+    for (j = 0; j < N; j++)
+    {
+        close(piped[j][1]);
+    }
+    
+    
     
     for (n = 0; n < N; n++)
     {
