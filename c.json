@@ -293,7 +293,7 @@
   "t-open: open file": {
     "prefix": "t-open: open file",
     "body": [
-      "/* Apertura del file*/",
+      "/* Apertura del file */",
       "if ((fd = open(${1:argv[n + 1]}, ${2:O_RDONLY})) < 0)",
       "{",
       "\tprintf(\"Errore nell'apertura del file '%s'.\\n\", ${1:argv[n + 1]});",
